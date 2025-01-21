@@ -23,7 +23,7 @@ DCAP_MODE=SGX|TDX|MOCK
 ```
 The EVM_PRIVATE_KEY used to submit the DCAP attestation on evm networks, please make sure it has enough balance to pay for the transaction fee.
 
-The DCAP_MODE is used to specify the mode of DCAP attestation, it can be:
+The DCAP_MODE is used to specify the mode of generating DCAP attestation, it can be:
 - SGX: Use the `sgxAttestationProvider` in `plugin-sgx` to generate the DCAP attestation.
 - TDX: Use the `remoteAttestationProvider` in `plugin-tee` to generate the DCAP attestation.
 - MOCK: Use a predefined attestation, this option is only for testing purposes.
