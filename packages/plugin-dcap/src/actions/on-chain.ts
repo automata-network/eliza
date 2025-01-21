@@ -70,7 +70,7 @@ export const dcapOnChainVerifyAction: Action = {
         if (!hasPrivateKey(runtime)) return false;
         const mode = getDCAPMode(runtime);
         if (!mode) return false;
-        if (mode === DCAPMode.TDX) return hasTEEMode(runtime);
+        if (mode === DCAPMode.PLUGIN_TEE) return hasTEEMode(runtime);
         return true;
     },
     async handler(runtime, message, state, options, callback) {

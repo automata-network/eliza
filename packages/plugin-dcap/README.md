@@ -9,6 +9,11 @@ This plugin provides the following features:
 - Generate DCAP attestation on SGX using the `sgxAttestationProvider` provided by the [plugin-sgx](https://github.com/elizaOS/eliza/tree/develop/packages/plugin-sgx).
 - Submit and verify DCAP attestation on-chain.
 
+## Future Features (Coming soon)
+- Support to verify DCAP attestation on more EVM networks.
+- Support to verify DCAP attestation on Solana.
+- Support to topup the wallet before submitting the DCAP attestation on testnets.
+
 ## Installation
 
 ```bash
@@ -19,13 +24,13 @@ pnpm install @elizaos/plugin-dcap
 1. Set up your environment variables:
 ```env
 EVM_PRIVATE_KEY=your-private-key-here
-DCAP_MODE=SGX|TDX|MOCK
+DCAP_MODE=PLUGIN-SGX|PLUGIN-TEE|MOCK
 ```
 The EVM_PRIVATE_KEY used to submit the DCAP attestation on evm networks, please make sure it has enough balance to pay for the transaction fee.
 
 The DCAP_MODE is used to specify the mode of generating DCAP attestation, it can be:
-- SGX: Use the `sgxAttestationProvider` in `plugin-sgx` to generate the DCAP attestation.
-- TDX: Use the `remoteAttestationProvider` in `plugin-tee` to generate the DCAP attestation.
+- PLUGIN-SGX: Use the `sgxAttestationProvider` in `plugin-sgx` to generate the DCAP attestation.
+- PLUGIN-TEE: Use the `remoteAttestationProvider` in `plugin-tee` to generate the DCAP attestation.
 - MOCK: Use a predefined attestation, this option is only for testing purposes.
 
 Check the docs of `plugin-sgx` and `plugin-tee` for how to run your agent in TEE before using the SGX or TDX mode.
@@ -46,7 +51,7 @@ The plugin provides an action `dcapOnChainVerifyAction` which will be triggered 
 ```plaintext
 "Verify the DCAP attestation on-chain"
 "Generate a DCAP attestation and verify it on-chain"
-"DCAP_ON_CHAIN" #The keyword will also trigger the action
+"DCAP_ON_CHAIN" # The keyword will also trigger the action
 ```
 
 ## Development
@@ -72,15 +77,10 @@ pnpm test
 
 We are welcom to any feedback and contributions!
 
-## Future Features
-- Support to verify DCAP attestation on more EVM networks.
-- Support to verify DCAP attestation on Solana.
-- Support to topup the wallet before submitting the DCAP attestation on testnets.
-
 ## Credits
 - [Automata Network](https://ata.network): Provided the on-chain DCAP verification, enabling the decentralized verification of TEE attestations.
 - [Phala Network](https://phala.network): Provided support for running agents in TDX environment and contributed the `plugin-tee` for generating DCAP attestation on TDX.
-- [plugin-sgx](https://github.com/elizaOS/eliza/tree/develop/packages/plugin-sgx): Provided the provider for generating DCAP attestation on SGX.
+- [Gramine](https://gramineproject.io/): Provided support for running agents in SGX environment.
 
 ## License
 
