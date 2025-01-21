@@ -1,7 +1,13 @@
 import type { Action } from "@elizaos/core";
-import type { TEEMode } from "@elizaos/plugin-tee";
 import { verifyAndAttestOnChain } from "../dcap.js";
 import { getQuote } from "../quote.js";
+import { DCAPMode } from "../types.js";
+import {
+    getDCAPMode,
+    getTEEMode,
+    hasPrivateKey,
+    hasTEEMode,
+} from "../utils.js";
 
 export const dcapOnChainVerifyAction: Action = {
     name: "DCAP_ON_CHAIN",
@@ -47,16 +53,17 @@ export const dcapOnChainVerifyAction: Action = {
         ],
     ],
     async validate(runtime, message) {
-        try {
-            // const { text } = message.content;
-            // return typeof text === "string" && text.startsWith("0x");
-            const privateKey = runtime.getSetting("EVM_PRIVATE_KEY");
-            return (
-                typeof privateKey === "string" && privateKey.startsWith("0x")
-            );
-        } catch {
-            return false;
-        }
+        if (!hasPrivateKey(runtime)) return false;
+        const mode = getDCAPMode(runtime);
+        if (!mode) return false;
+        if (mode === DCAPMode.TDX) return hasTEEMode(runtime);
+        // try {
+        // const { text } = message.content;
+        // return is0xString(message.content.text);
+        // } catch {
+        //     return false;
+        // }
+        return true;
     },
     async handler(runtime, message, state, options, callback) {
         const { agentId } = runtime;
@@ -68,7 +75,8 @@ export const dcapOnChainVerifyAction: Action = {
                 timestamp: Date.now(),
                 message: { userId, roomId, content: content.text },
             }),
-            runtime.getSetting("TEE_MODE") as TEEMode
+            getDCAPMode(runtime),
+            getTEEMode(runtime)
         );
 
         const reply = (text: string) =>
