@@ -71,12 +71,6 @@ export const dcapOnChainVerifyAction: Action = {
         const mode = getDCAPMode(runtime);
         if (!mode) return false;
         if (mode === DCAPMode.TDX) return hasTEEMode(runtime);
-        // try {
-        // const { text } = message.content;
-        // return is0xString(message.content.text);
-        // } catch {
-        //     return false;
-        // }
         return true;
     },
     async handler(runtime, message, state, options, callback) {
