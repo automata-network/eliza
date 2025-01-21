@@ -9,6 +9,11 @@ This plugin provides the following features:
 - Generate DCAP attestation on SGX using the `sgxAttestationProvider` provided by the [plugin-sgx](https://github.com/elizaOS/eliza/tree/develop/packages/plugin-sgx).
 - Submit and verify DCAP attestation on-chain.
 
+## Future Features(Coming soon)
+- Support to verify DCAP attestation on more EVM networks.
+- Support to verify DCAP attestation on Solana.
+- Support to topup the wallet before submitting the DCAP attestation on testnets.
+
 ## Installation
 
 ```bash
@@ -71,11 +76,6 @@ pnpm test
 ```
 
 We are welcom to any feedback and contributions!
-
-## Future Features
-- Support to verify DCAP attestation on more EVM networks.
-- Support to verify DCAP attestation on Solana.
-- Support to topup the wallet before submitting the DCAP attestation on testnets.
 
 ## Credits
 - [Automata Network](https://ata.network): Provided the on-chain DCAP verification, enabling the decentralized verification of TEE attestations.
