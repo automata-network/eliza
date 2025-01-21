@@ -12,6 +12,7 @@ This plugin provides the following features:
 ## Future Features (Coming soon)
 - Support to verify DCAP attestation on more EVM networks.
 - Support to verify DCAP attestation on Solana.
+- Support to verify DCAP attestation using ZKVM and verify the zk proof on-chain.
 - Support to topup the wallet before submitting the DCAP attestation on testnets.
 
 ## Installation
