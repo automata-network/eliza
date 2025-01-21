@@ -12,12 +12,16 @@ import {
 export const dcapOnChainVerifyAction: Action = {
     name: "DCAP_ON_CHAIN",
     description:
-        "If the user wants to perform DCAP attestation, then call this action. The user can also directly use the keyword DCAP_ON_CHAIN to call this action.",
+        "This plugin is used to generate DCAP attestation and verify it on-chain. The user can also use the keyword DCAP_ON_CHAIN to trigger this action.",
     similes: [
         "DCAP",
         "DCAP_ATTESTATION",
         "DCAP_TEE",
         "DCAP_SGX",
+        "DCAP_TDX",
+        "VERIFY_ATTESTATION",
+        "VERIFY_DCAP",
+        "DCAP_VERIFICATION",
         "ATTESTATION",
         "GENERATE_ATTESTATION",
     ],
@@ -25,15 +29,25 @@ export const dcapOnChainVerifyAction: Action = {
         [
             {
                 user: "{{user1}}",
-                content: {
-                    text: "Generate an attestation and verify it on-chain",
-                    action: "DCAP_ON_CHAIN",
-                },
+                content: { text: "Generate a DCAP attestation and verify it on-chain" },
             },
             {
                 user: "{{user2}}",
                 content: {
-                    text: "Of course, one second...",
+                    text: "Of course, hanlding it now...",
+                    action: "DCAP_ON_CHAIN",
+                },
+            },
+        ],
+        [
+            {
+                user: "{{user1}}",
+                content: { text: "Verify the DCAP attestation on-chain" },
+            },
+            {
+                user: "{{user2}}",
+                content: {
+                    text: "Of course, hanlding it now...",
                     action: "DCAP_ON_CHAIN",
                 },
             },
@@ -46,7 +60,7 @@ export const dcapOnChainVerifyAction: Action = {
             {
                 user: "{{user2}}",
                 content: {
-                    text: "secret code activate....",
+                    text: "Of course, hanlding it now...",
                     action: "DCAP_ON_CHAIN",
                 },
             },
@@ -57,12 +71,6 @@ export const dcapOnChainVerifyAction: Action = {
         const mode = getDCAPMode(runtime);
         if (!mode) return false;
         if (mode === DCAPMode.TDX) return hasTEEMode(runtime);
-        // try {
-        // const { text } = message.content;
-        // return is0xString(message.content.text);
-        // } catch {
-        //     return false;
-        // }
         return true;
     },
     async handler(runtime, message, state, options, callback) {

@@ -1,10 +1,13 @@
 # @elizaos/plugin-dcap
 
-A basic DCAP attestation plugin for the Eliza AI framework.
+A plugin for verifying DCAP attestation on-chain built based on the [automata-dcap-attestation](https://github.com/automata-network/automata-dcap-attestation).
 
-## Description
+## Features
 
-This plugin provides actions for verifying (i.e., attesting) raw-quotes on EVM-compatible chains, including various testnets and mainnets.
+This plugin provides the following features:
+- Generate DCAP attestation on TDX using the `remoteAttestationProvider` provided by the [plugin-tee](https://github.com/elizaOS/eliza/tree/develop/packages/plugin-tee).
+- Generate DCAP attestation on SGX using the `sgxAttestationProvider` provided by the [plugin-sgx](https://github.com/elizaOS/eliza/tree/develop/packages/plugin-sgx).
+- Submit and verify DCAP attestation on-chain.
 
 ## Installation
 
@@ -13,19 +16,38 @@ pnpm install @elizaos/plugin-dcap
 ```
 
 ## Configuration
-
-### Required Environment Variables
-
+1. Set up your environment variables:
 ```env
-# Required
 EVM_PRIVATE_KEY=your-private-key-here
+DCAP_MODE=SGX|TDX|MOCK
+```
+The EVM_PRIVATE_KEY used to submit the DCAP attestation on evm networks, please make sure it has enough balance to pay for the transaction fee.
+
+The DCAP_MODE is used to specify the mode of generating DCAP attestation, it can be:
+- SGX: Use the `sgxAttestationProvider` in `plugin-sgx` to generate the DCAP attestation.
+- TDX: Use the `remoteAttestationProvider` in `plugin-tee` to generate the DCAP attestation.
+- MOCK: Use a predefined attestation, this option is only for testing purposes.
+
+Check the docs of `plugin-sgx` and `plugin-tee` for how to run your agent in TEE before using the SGX or TDX mode.
+
+2. Register the plugin in your Eliza configuration:
+```typescript
+import { dcapPlugin } from "@elizaos/plugin-dcap";
+
+// In your Eliza configuration
+plugins: [
+    dcapPlugin,
+    // ... other plugins
+];
 ```
 
-## Actions
-
-### 1. DCAP_ON_CHAIN
-
-Performs the on-chain verification for a rawQuote, which might come from SGX or TEE.
+## Usage
+The plugin provides an action `dcapOnChainVerifyAction` which will be triggered by natural languages like:
+```plaintext
+"Verify the DCAP attestation on-chain"
+"Generate a DCAP attestation and verify it on-chain"
+"DCAP_ON_CHAIN" #The keyword will also trigger the action
+```
 
 ## Development
 
@@ -48,20 +70,17 @@ pnpm run build
 pnpm test
 ```
 
-## Usage
+We are welcom to any feedback and contributions!
 
-Import and register the plugin in your Eliza configuration:
+## Future Features
+- Support to verify DCAP attestation on more EVM networks.
+- Support to verify DCAP attestation on Solana.
+- Support to topup the wallet before submitting the DCAP attestation on testnets.
 
-```typescript
-import { dcapPlugin } from "@ai16z/eliza-plugin-dcap";
-
-export default {
-    plugins: [teePlugin],
-    // ... other configuration
-};
-```
-
-We welcome community feedback and contributions.
+## Credits
+- [Automata Network](https://ata.network): Provided the on-chain DCAP verification, enabling the decentralized verification of TEE attestations.
+- [Phala Network](https://phala.network): Provided support for running agents in TDX environment and contributed the `plugin-tee` for generating DCAP attestation on TDX.
+- [plugin-sgx](https://github.com/elizaOS/eliza/tree/develop/packages/plugin-sgx): Provided the provider for generating DCAP attestation on SGX.
 
 ## License
 
