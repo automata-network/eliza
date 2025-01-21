@@ -21,12 +21,12 @@ export async function getQuote(
     teeMode?: TEEMode
 ) {
     switch (dcapMode) {
-        case DCAPMode.SGX:
+        case DCAPMode.PLUGIN_SGX:
             return await tryQuote(
                 new SgxAttestationProvider().generateAttestation(message),
                 "SGX"
             );
-        case DCAPMode.TDX:
+        case DCAPMode.PLUGIN_TEE:
             return await tryQuote(
                 new RemoteAttestationProvider(teeMode).generateAttestation(
                     message

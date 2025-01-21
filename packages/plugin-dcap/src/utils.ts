@@ -18,10 +18,10 @@ export function getDCAPMode(runtime: IAgentRuntime) {
         const mode = runtime.getSetting("DCAP_MODE");
         if (!mode) return;
         switch (mode.toUpperCase()) {
-            case DCAPMode.SGX:
-                return DCAPMode.SGX;
-            case DCAPMode.TDX:
-                return DCAPMode.TDX;
+            case DCAPMode.PLUGIN_SGX:
+                return DCAPMode.PLUGIN_SGX;
+            case DCAPMode.PLUGIN_TEE:
+                return DCAPMode.PLUGIN_TEE;
             case DCAPMode.MOCK:
                 return DCAPMode.MOCK;
         }
