@@ -29,7 +29,9 @@ export const dcapOnChainVerifyAction: Action = {
         [
             {
                 user: "{{user1}}",
-                content: { text: "Generate a DCAP attestation and verify it on-chain" },
+                content: {
+                    text: "Generate a DCAP attestation and verify it on-chain",
+                },
             },
             {
                 user: "{{user2}}",

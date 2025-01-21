@@ -9,7 +9,7 @@ This plugin provides the following features:
 - Generate DCAP attestation on SGX using the `sgxAttestationProvider` provided by the [plugin-sgx](https://github.com/elizaOS/eliza/tree/develop/packages/plugin-sgx).
 - Submit and verify DCAP attestation on-chain.
 
-## Future Features (Coming soon)
+## Future Features (coming soon)
 - Support to verify DCAP attestation on more EVM networks.
 - Support to verify DCAP attestation on Solana.
 - Support to verify DCAP attestation using ZKVM and verify the zk proof on-chain.
