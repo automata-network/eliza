@@ -31,13 +31,13 @@ export const dcapOnChainVerifyAction: Action = {
                 user: "{{user1}}",
                 content: {
                     text: "Generate a DCAP attestation and verify it on-chain",
+                    action: "DCAP_ON_CHAIN",
                 },
             },
             {
                 user: "{{user2}}",
                 content: {
                     text: "Of course, hanlding it now...",
-                    action: "DCAP_ON_CHAIN",
                 },
             },
         ],
@@ -45,12 +45,12 @@ export const dcapOnChainVerifyAction: Action = {
             {
                 user: "{{user1}}",
                 content: { text: "Verify the DCAP attestation on-chain" },
+                action: "DCAP_ON_CHAIN",
             },
             {
                 user: "{{user2}}",
                 content: {
                     text: "Of course, hanlding it now...",
-                    action: "DCAP_ON_CHAIN",
                 },
             },
         ],
@@ -58,12 +58,12 @@ export const dcapOnChainVerifyAction: Action = {
             {
                 user: "{{user1}}",
                 content: { text: "DCAP_ON_CHAIN" },
+                action: "DCAP_ON_CHAIN",
             },
             {
                 user: "{{user2}}",
                 content: {
                     text: "Of course, hanlding it now...",
-                    action: "DCAP_ON_CHAIN",
                 },
             },
         ],
