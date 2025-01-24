@@ -78,6 +78,7 @@
         "@elizaos/plugin-sui": "workspace:*",
         "@elizaos/plugin-sgx": "workspace:*",
         "@elizaos/plugin-iq6900": "workspace:*",
+        "@elizaos/plugin-poa": "workspace:*",
         "@elizaos/plugin-tee": "workspace:*",
         "@elizaos/plugin-tee-log": "workspace:*",
         "@elizaos/plugin-tee-marlin": "workspace:*",
