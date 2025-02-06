@@ -27,6 +27,7 @@ import { PrimusAdapter } from "@elizaos/plugin-primus";
 import { lightningPlugin } from "@elizaos/plugin-lightning";
 import { elizaCodeinPlugin, onchainJson } from "@elizaos/plugin-iq6900";
 import { dcapPlugin } from "@elizaos/plugin-dcap";
+import { verifiableTwitterPlugin } from "@elizaos/plugin-verifiable-twitter";
 import {
     AgentRuntime,
     CacheManager,
@@ -1305,6 +1306,7 @@ export async function createAgent(
             getSecret(character, "DESK_EXCHANGE_NETWORK")
                 ? deskExchangePlugin
                 : null,
+			verifiableTwitterPlugin,
         ]
             .flat()
             .filter(Boolean),
