@@ -31,8 +31,8 @@ export class VerifiableTwitterSubagentProvider {
     };
     const payload = JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tweet", params: [params] });
     elizaLogger.info("[VerifiableTwitterSubagent] send tweet:", tweetContent)
-    const response = await send_rpc_request<string>(this.subagentUrl, '/', payload);
-    return response;
+    const response = await send_rpc_request<any>(this.subagentUrl, '/', payload);
+    return response.result;
   }
 }
 
