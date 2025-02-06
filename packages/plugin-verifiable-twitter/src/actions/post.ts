@@ -67,19 +67,13 @@ export const postAction: Action = {
     description: "Post a tweet to Twitter",
     validate: async (
         runtime: IAgentRuntime,
-// eslint-disable-next-line
         _message: Memory,
-// eslint-disable-next-line
         _state?: State
     ) => {
-        return true;
-        const username = runtime.getSetting("TWITTER_USERNAME");
-        const password = runtime.getSetting("TWITTER_PASSWORD");
-        const email = runtime.getSetting("TWITTER_EMAIL");
-        const hasCredentials = !!username && !!password && !!email;
-        elizaLogger.log(`Has credentials: ${hasCredentials}`);
-
-        return hasCredentials;
+        return !!runtime.getSetting("TWITTER_CONSUMER_KEY")
+            && !!runtime.getSetting("TWITTER_CONSUMER_SECRET")
+            && !!runtime.getSetting("TWITTER_ACCESS_TOKEN")
+            && !!runtime.getSetting("TWITTER_ACCESS_TOKEN_SECRET");
     },
     handler: async (
         runtime: IAgentRuntime,
@@ -89,7 +83,6 @@ export const postAction: Action = {
         callback?
     ): Promise<boolean> => {
         try {
-            elizaLogger.info("hello");
             const client = new VerifiableTwitterSubagentProvider(
                 runtime.getSetting("TWITTER_CONSUMER_KEY"),
                 runtime.getSetting("TWITTER_CONSUMER_SECRET"),
@@ -118,6 +111,7 @@ export const postAction: Action = {
             }
 
             const attestationReport = await client.postTweet(tweetContent);
+            elizaLogger.info(`attestation report: ${attestationReport}`);
             return true;
         } catch (error) {
             elizaLogger.error("Error in post action:", error);
