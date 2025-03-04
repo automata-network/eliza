@@ -1,0 +1,3 @@
+-   remove BGE model when it running on nodejs because it use a tokenizer which doesn't support ios platform
+-   remove AutoTokenizer in and max token check because it uses unicode regex which node mobile does't support
+- remove discord.js from client-direct package, it will affect the /agents/:agentId/channels api

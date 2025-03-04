@@ -25,3 +25,5 @@ export * from "./cache.ts";
 export { default as knowledge } from "./knowledge.ts";
 export * from "./ragknowledge.ts";
 export * from "./utils.ts";
+export * from "./nodeMobileEmbeddingManager.ts";
+export { elizaLogger } from "./logger.ts";

@@ -3,6 +3,8 @@ import { type IAgentRuntime, ModelProviderName } from "./types.ts";
 import settings from "./settings.ts";
 import elizaLogger from "./logger.ts";
 import LocalEmbeddingModelManager from "./localembeddingManager.ts";
+import fetch from "node-fetch";
+import NodeMobileModelManager from "./nodeMobileEmbeddingManager.ts";
 
 interface EmbeddingOptions {
     model: string;
@@ -15,6 +17,7 @@ interface EmbeddingOptions {
 }
 
 export const EmbeddingProvider = {
+    NodeMobile: "NodeMobile",
     OpenAI: "OpenAI",
     Ollama: "Ollama",
     GaiaNet: "GaiaNet",
@@ -31,40 +34,58 @@ export type EmbeddingConfig = {
     readonly provider: EmbeddingProviderType;
 };
 
-export const getEmbeddingConfig = (): EmbeddingConfig => ({
-    dimensions:
-        settings.USE_OPENAI_EMBEDDING?.toLowerCase() === "true"
-            ? getEmbeddingModelSettings(ModelProviderName.OPENAI).dimensions
-            : settings.USE_OLLAMA_EMBEDDING?.toLowerCase() === "true"
-              ? getEmbeddingModelSettings(ModelProviderName.OLLAMA).dimensions
-              : settings.USE_GAIANET_EMBEDDING?.toLowerCase() === "true"
+async function getNodeMobileModelConfig() {
+    const modelConfig = await NodeMobileModelManager.getModelConfig();
+
+    return modelConfig;
+}
+
+export const getEmbeddingConfig = async (): Promise<EmbeddingConfig> => {
+    const config: EmbeddingConfig = {
+        dimensions:
+            settings.USE_NODEMOBILE_EMBEDDING?.toLowerCase() === "true"
+                ? (await getNodeMobileModelConfig()).dimensions
+                : settings.USE_OPENAI_EMBEDDING?.toLowerCase() === "true"
+                ? getEmbeddingModelSettings(ModelProviderName.OPENAI).dimensions
+                : settings.USE_OLLAMA_EMBEDDING?.toLowerCase() === "true"
+                ? getEmbeddingModelSettings(ModelProviderName.OLLAMA).dimensions
+                : settings.USE_GAIANET_EMBEDDING?.toLowerCase() === "true"
                 ? getEmbeddingModelSettings(ModelProviderName.GAIANET)
                       .dimensions
                 : settings.USE_HEURIST_EMBEDDING?.toLowerCase() === "true"
-                  ? getEmbeddingModelSettings(ModelProviderName.HEURIST)
-                        .dimensions
-                  : 384, // BGE
-    model:
-        settings.USE_OPENAI_EMBEDDING?.toLowerCase() === "true"
-            ? getEmbeddingModelSettings(ModelProviderName.OPENAI).name
-            : settings.USE_OLLAMA_EMBEDDING?.toLowerCase() === "true"
-              ? getEmbeddingModelSettings(ModelProviderName.OLLAMA).name
-              : settings.USE_GAIANET_EMBEDDING?.toLowerCase() === "true"
+                ? getEmbeddingModelSettings(ModelProviderName.HEURIST)
+                      .dimensions
+                : 384, // BGE
+        model:
+            settings.USE_NODEMOBILE_EMBEDDING?.toLowerCase() === "true"
+                ? getEmbeddingModelSettings(ModelProviderName.NODEMOBILE).name
+                : settings.USE_OPENAI_EMBEDDING?.toLowerCase() === "true"
+                ? getEmbeddingModelSettings(ModelProviderName.OPENAI).name
+                : settings.USE_OLLAMA_EMBEDDING?.toLowerCase() === "true"
+                ? getEmbeddingModelSettings(ModelProviderName.OLLAMA).name
+                : settings.USE_GAIANET_EMBEDDING?.toLowerCase() === "true"
                 ? getEmbeddingModelSettings(ModelProviderName.GAIANET).name
                 : settings.USE_HEURIST_EMBEDDING?.toLowerCase() === "true"
-                  ? getEmbeddingModelSettings(ModelProviderName.HEURIST).name
-                  : "BGE-small-en-v1.5",
-    provider:
-        settings.USE_OPENAI_EMBEDDING?.toLowerCase() === "true"
-            ? "OpenAI"
-            : settings.USE_OLLAMA_EMBEDDING?.toLowerCase() === "true"
-              ? "Ollama"
-              : settings.USE_GAIANET_EMBEDDING?.toLowerCase() === "true"
+                ? getEmbeddingModelSettings(ModelProviderName.HEURIST).name
+                : "BGE-small-en-v1.5",
+        provider:
+            settings.USE_NODEMOBILE_EMBEDDING?.toLowerCase() === "true"
+                ? "NodeMobile"
+                : settings.USE_OPENAI_EMBEDDING?.toLowerCase() === "true"
+                ? "OpenAI"
+                : settings.USE_OLLAMA_EMBEDDING?.toLowerCase() === "true"
+                ? "Ollama"
+                : settings.USE_GAIANET_EMBEDDING?.toLowerCase() === "true"
                 ? "GaiaNet"
                 : settings.USE_HEURIST_EMBEDDING?.toLowerCase() === "true"
-                  ? "Heurist"
-                  : "BGE",
-});
+                ? "Heurist"
+                : "BGE",
+    };
+
+    elizaLogger.debug("embed config", config);
+
+    return config;
+};
 
 async function getRemoteEmbedding(
     input: string,
@@ -78,6 +99,7 @@ async function getRemoteEmbedding(
     // Construct full URL
     const fullUrl = `${baseEndpoint}/embeddings`;
 
+    const embeddingConfig = await getEmbeddingConfig();
     const requestOptions = {
         method: "POST",
         headers: {
@@ -94,7 +116,7 @@ async function getRemoteEmbedding(
             dimensions:
                 options.dimensions ||
                 options.length ||
-                getEmbeddingConfig().dimensions, // Prefer dimensions, fallback to length
+                embeddingConfig.dimensions, // Prefer dimensions, fallback to length
         }),
     };
 
@@ -112,7 +134,7 @@ async function getRemoteEmbedding(
             data: Array<{ embedding: number[] }>;
         }
 
-        const data: EmbeddingResponse = await response.json();
+        const data: EmbeddingResponse = (await response.json()) as any;
         return data?.data?.[0].embedding;
     } catch (e) {
         elizaLogger.error("Full error details:", e);
@@ -120,7 +142,13 @@ async function getRemoteEmbedding(
     }
 }
 
-export function getEmbeddingType(runtime: IAgentRuntime): "local" | "remote" {
+export function getEmbeddingType(
+    runtime: IAgentRuntime
+): "local" | "remote" | "node_mobile" {
+    const isNodeMobile =
+        settings.USE_NODEMOBILE_EMBEDDING &&
+        runtime.character.modelProvider === ModelProviderName.NODEMOBILE;
+
     const isNode =
         typeof process !== "undefined" &&
         process.versions != null &&
@@ -137,13 +165,16 @@ export function getEmbeddingType(runtime: IAgentRuntime): "local" | "remote" {
         runtime.character.modelProvider !== ModelProviderName.HEURIST &&
         !settings.USE_OPENAI_EMBEDDING;
 
-    return isLocal ? "local" : "remote";
+    return isNodeMobile ? "node_mobile" : isLocal ? "local" : "remote";
 }
 
-export function getEmbeddingZeroVector(): number[] {
+export async function getEmbeddingZeroVector(): Promise<number[]> {
     let embeddingDimension = 384; // Default BGE dimension
 
-    if (settings.USE_OPENAI_EMBEDDING?.toLowerCase() === "true") {
+    if (settings.USE_NODEMOBILE_EMBEDDING?.toLowerCase() === "true") {
+        const modelConfig = await getNodeMobileModelConfig();
+        embeddingDimension = modelConfig.dimensions;
+    } else if (settings.USE_OPENAI_EMBEDDING?.toLowerCase() === "true") {
         embeddingDimension = getEmbeddingModelSettings(
             ModelProviderName.OPENAI
         ).dimensions; // OpenAI dimension
@@ -160,6 +191,8 @@ export function getEmbeddingZeroVector(): number[] {
             ModelProviderName.HEURIST
         ).dimensions; // Heurist dimension
     }
+
+    elizaLogger.debug("embeddingDimension", embeddingDimension);
 
     return Array(embeddingDimension).fill(0);
 }
@@ -180,6 +213,13 @@ export function getEmbeddingZeroVector(): number[] {
  */
 
 export async function embed(runtime: IAgentRuntime, input: string) {
+    try {
+        // Code throwing an exception
+        throw new Error();
+    } catch (e) {
+        elizaLogger.debug("embed stack", e.stack);
+    }
+
     elizaLogger.debug("Embedding request:", {
         modelProvider: runtime.character.modelProvider,
         useOpenAI: process.env.USE_OPENAI_EMBEDDING,
@@ -204,8 +244,12 @@ export async function embed(runtime: IAgentRuntime, input: string) {
     const cachedEmbedding = await retrieveCachedEmbedding(runtime, input);
     if (cachedEmbedding) return cachedEmbedding;
 
-    const config = getEmbeddingConfig();
+    const config = await getEmbeddingConfig();
     const isNode = typeof process !== "undefined" && process.versions?.node;
+
+    if (config.provider === EmbeddingProvider.NodeMobile) {
+        return await getNodeMobileEmbedding(input);
+    }
 
     // Determine which embedding path to use
     if (config.provider === EmbeddingProvider.OpenAI) {
@@ -272,6 +316,18 @@ export async function embed(runtime: IAgentRuntime, input: string) {
         apiKey: runtime.token,
         dimensions: config.dimensions,
     });
+
+    async function getNodeMobileEmbedding(input: string): Promise<number[]> {
+        elizaLogger.debug("DEBUG - Inside getNodeMobileEmbedding function");
+
+        try {
+            const embeddingManager = NodeMobileModelManager.getInstance();
+            return await embeddingManager.generateEmbedding(input);
+        } catch (error) {
+            elizaLogger.error("NodeMobile embedding failed:", error);
+            throw error;
+        }
+    }
 
     async function getLocalEmbedding(input: string): Promise<number[]> {
         elizaLogger.debug("DEBUG - Inside getLocalEmbedding function");

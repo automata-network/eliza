@@ -16,7 +16,6 @@ import { Buffer } from "buffer";
 import { createOllama } from "ollama-ai-provider";
 import OpenAI from "openai";
 import { encodingForModel, type TiktokenModel } from "js-tiktoken";
-import { AutoTokenizer } from "@huggingface/transformers";
 import Together from "together-ai";
 import type { ZodSchema } from "zod";
 import { elizaLogger } from "./index.ts";
@@ -54,6 +53,8 @@ import { fal } from "@fal-ai/client";
 
 import BigNumber from "bignumber.js";
 import { createPublicClient, http } from "viem";
+import fetch from "node-fetch";
+import NodeMobileModelManager from "./nodeMobileEmbeddingManager.ts";
 
 type Tool = CoreTool<any, any>;
 type StepResult = AIStepResult<any>;
@@ -87,8 +88,13 @@ export async function trimTokens(
     if (!context) return "";
     if (maxTokens <= 0) throw new Error("maxTokens must be positive");
 
+    const useNodeMobile = runtime.getSetting("USE_NODEMOBILE_EMBEDDING");
     const tokenizerModel = runtime.getSetting("TOKENIZER_MODEL");
     const tokenizerType = runtime.getSetting("TOKENIZER_TYPE");
+
+    if (useNodeMobile) {
+        return truncateNodeMobile(context, maxTokens);
+    }
 
     if (!tokenizerModel || !tokenizerType) {
         // Default to TikToken truncation using the "gpt-4o" model if tokenizer settings are not defined
@@ -112,12 +118,55 @@ export async function trimTokens(
     return truncateTiktoken("gpt-4o", context, maxTokens);
 }
 
+async function truncateNodeMobile(context: string, maxTokens: number) {
+    try {
+        const tokens = await new Promise<number[]>((resolve, reject) => {
+            NodeMobileModelManager.once("nodeMobileTokenizeResp", (data) => {
+                resolve(data.tokens);
+            });
+
+            NodeMobileModelManager.sendMessage("nodeMobileTokenize", context);
+        });
+        // If already within limits, return unchanged
+        if (tokens.length <= maxTokens) {
+            return context;
+        }
+
+        // Keep the most recent tokens by slicing from the end
+        const truncatedTokens = tokens.slice(-maxTokens);
+
+        const truncatedContext = await new Promise<string>(
+            (resolve, reject) => {
+                NodeMobileModelManager.once(
+                    "nodeMobileDetokenizeResp",
+                    (data) => {
+                        resolve(data);
+                    }
+                );
+
+                NodeMobileModelManager.sendMessage(
+                    "nodeMobileDetokenize",
+                    truncatedTokens
+                );
+            }
+        );
+
+        // Decode back to text - js-tiktoken decode() returns a string directly
+        return truncatedContext;
+    } catch (error) {
+        elizaLogger.error("Error in trimTokens:", error);
+        // Return truncated string if tokenization fails
+        return context.slice(-maxTokens * 4); // Rough estimate of 4 chars per token
+    }
+}
+
 async function truncateAuto(
     modelPath: string,
     context: string,
     maxTokens: number
 ) {
     try {
+        const { AutoTokenizer } = await import("@huggingface/transformers");
         const tokenizer = await AutoTokenizer.from_pretrained(modelPath);
         const tokens = tokenizer.encode(context);
 
@@ -420,7 +469,10 @@ export async function generateText({
 
     const endpoint =
         runtime.character.modelEndpointOverride || getEndpoint(provider);
-    const modelSettings = getModelSettings(runtime.modelProvider, modelClass);
+    const modelSettings = await getModelSettings(
+        runtime.modelProvider,
+        modelClass
+    );
     let model = modelSettings.name;
 
     // allow character.json settings => secrets to override models
@@ -502,8 +554,7 @@ export async function generateText({
     const max_context_length =
         modelConfiguration?.maxInputTokens || modelSettings.maxInputTokens;
     const max_response_length =
-        modelConfiguration?.maxOutputTokens ||
-        modelSettings.maxOutputTokens;
+        modelConfiguration?.maxOutputTokens || modelSettings.maxOutputTokens;
     const experimental_telemetry =
         modelConfiguration?.experimental_telemetry ||
         modelSettings.experimental_telemetry;
@@ -841,6 +892,7 @@ export async function generateText({
                 break;
             }
 
+            case ModelProviderName.NODEMOBILE:
             case ModelProviderName.LLAMALOCAL: {
                 elizaLogger.debug(
                     "Using local Llama model for text completion."
@@ -939,6 +991,18 @@ export async function generateText({
                     const ollama = ollamaProvider(model);
 
                     elizaLogger.debug("****** MODEL\n", model);
+                    elizaLogger.debug("****** Params\n", {
+                        model: ollama,
+                        prompt: context,
+                        tools: tools,
+                        onStepFinish: onStepFinish,
+                        temperature: temperature,
+                        maxSteps: maxSteps,
+                        maxTokens: max_response_length,
+                        frequencyPenalty: frequency_penalty,
+                        presencePenalty: presence_penalty,
+                        experimental_telemetry: experimental_telemetry,
+                    });
 
                     const { text: ollamaResponse } = await aiGenerateText({
                         model: ollama,
@@ -954,6 +1018,11 @@ export async function generateText({
                     });
 
                     response = ollamaResponse;
+
+                    elizaLogger.debug(
+                        "****** ollamaResponse\n",
+                        ollamaResponse
+                    );
                 }
                 elizaLogger.debug("Received response from Ollama model.");
                 break;
@@ -1165,8 +1234,10 @@ export async function generateText({
                 // console.warn("veniceResponse:")
                 // console.warn(veniceResponse)
                 //rferrari: remove all text from <think> to </think>\n\n
-                response = veniceResponse
-                    .replace(/<think>[\s\S]*?<\/think>\s*\n*/g, '');
+                response = veniceResponse.replace(
+                    /<think>[\s\S]*?<\/think>\s*\n*/g,
+                    ""
+                );
                 // console.warn(response)
 
                 // response = veniceResponse;
@@ -1420,7 +1491,10 @@ export async function generateTrueOrFalse({
     modelClass: ModelClass;
 }): Promise<boolean> {
     let retryDelay = 1000;
-    const modelSettings = getModelSettings(runtime.modelProvider, modelClass);
+    const modelSettings = await getModelSettings(
+        runtime.modelProvider,
+        modelClass
+    );
     const stop = Array.from(
         new Set([...(modelSettings.stop || []), ["\n"]])
     ) as string[];
@@ -1591,7 +1665,10 @@ export async function generateMessageResponse({
     context: string;
     modelClass: ModelClass;
 }): Promise<Content> {
-    const modelSettings = getModelSettings(runtime.modelProvider, modelClass);
+    const modelSettings = await getModelSettings(
+        runtime.modelProvider,
+        modelClass
+    );
     const max_context_length = modelSettings.maxInputTokens;
 
     context = await trimTokens(context, max_context_length, runtime);
@@ -1650,7 +1727,9 @@ export const generateImage = async (
 }> => {
     const modelSettings = getImageModelSettings(runtime.imageModelProvider);
     if (!modelSettings) {
-        elizaLogger.warn("No model settings found for the image model provider.");
+        elizaLogger.warn(
+            "No model settings found for the image model provider."
+        );
         return { success: false, error: "No model settings available" };
     }
     const model = modelSettings.name;
@@ -1725,7 +1804,7 @@ export const generateImage = async (
                 );
             }
 
-            const imageURL = await response.json();
+            const imageURL = (await response.json()) as any;
             return { success: true, data: [imageURL] };
         } else if (
             runtime.imageModelProvider === ModelProviderName.TOGETHER ||
@@ -1863,7 +1942,7 @@ export const generateImage = async (
                 }
             );
 
-            const result = await response.json();
+            const result = (await response.json()) as any;
 
             if (!result.images || !Array.isArray(result.images)) {
                 throw new Error("Invalid response format from Venice AI");
@@ -1902,7 +1981,7 @@ export const generateImage = async (
                 }
             );
 
-            const result = await response.json();
+            const result = (await response.json()) as any;
 
             if (!result.images || !Array.isArray(result.images)) {
                 throw new Error("Invalid response format from Nineteen AI");
@@ -1945,7 +2024,7 @@ export const generateImage = async (
                         }),
                     }
                 );
-                const result = await response.json();
+                const result = (await response.json()) as any;
                 if (!result.images?.length) {
                     throw new Error("No images generated");
                 }
@@ -2095,7 +2174,10 @@ export const generateObject = async ({
     }
 
     const provider = runtime.modelProvider;
-    const modelSettings = getModelSettings(runtime.modelProvider, modelClass);
+    const modelSettings = await getModelSettings(
+        runtime.modelProvider,
+        modelClass
+    );
     const model = modelSettings.name;
     const temperature = modelSettings.temperature;
     const frequency_penalty = modelSettings.frequency_penalty;
@@ -2200,6 +2282,7 @@ export async function handleProvider(
         case ModelProviderName.GROQ:
             return await handleGroq(options);
         case ModelProviderName.LLAMALOCAL:
+        case ModelProviderName.NODEMOBILE:
             return await generateObjectDeprecated({
                 runtime,
                 context,
@@ -2245,8 +2328,7 @@ async function handleOpenAI({
 }: ProviderOptions): Promise<GenerateObjectResult<unknown>> {
     const endpoint =
         runtime.character.modelEndpointOverride || getEndpoint(provider);
-    const baseURL =
-        getCloudflareGatewayBaseURL(runtime, "openai") || endpoint;
+    const baseURL = getCloudflareGatewayBaseURL(runtime, "openai") || endpoint;
     const openai = createOpenAI({ apiKey, baseURL });
     return await aiGenerateObject({
         model: openai.languageModel(model),
@@ -2365,7 +2447,7 @@ async function handleGoogle({
     mode = "json",
     modelOptions,
 }: ProviderOptions): Promise<GenerateObjectResult<unknown>> {
-    const google = createGoogleGenerativeAI({apiKey});
+    const google = createGoogleGenerativeAI({ apiKey });
     return await aiGenerateObject({
         model: google(model),
         schema,

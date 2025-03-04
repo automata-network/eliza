@@ -15,7 +15,6 @@ import {
 } from "@elizaos/core";
 
 import type { TeeLogQuery, TeeLogService } from "@elizaos/plugin-tee-log";
-import { REST, Routes } from "discord.js";
 import type { DirectClient } from ".";
 import { validateUuid } from "@elizaos/core";
 
@@ -84,7 +83,7 @@ export function createApiRouter(
 
     router.get('/storage', async (req, res) => {
         try {
-            const uploadDir = path.join(process.cwd(), "data", "characters");
+            const uploadDir = path.join(process.env.cwd, "data", "characters");
             const files = await fs.promises.readdir(uploadDir);
             res.json({ files });
         } catch (error) {
@@ -182,7 +181,7 @@ export function createApiRouter(
             try {
                 const filename = `${agent.agentId}.json`;
                 const uploadDir = path.join(
-                    process.cwd(),
+                    process.env.cwd,
                     "data",
                     "characters"
                 );
@@ -226,15 +225,15 @@ export function createApiRouter(
         }
 
         const API_TOKEN = runtime.getSetting("DISCORD_API_TOKEN") as string;
-        const rest = new REST({ version: "10" }).setToken(API_TOKEN);
+        // const rest = new REST({ version: "10" }).setToken(API_TOKEN);
 
         try {
-            const guilds = (await rest.get(Routes.userGuilds())) as Array<any>;
+            // const guilds = (await rest.get(Routes.userGuilds())) as Array<any>;
 
             res.json({
                 id: runtime.agentId,
-                guilds: guilds,
-                serverCount: guilds.length,
+                guilds: [],
+                serverCount: 0,
             });
         } catch (error) {
             console.error("Error fetching guilds:", error);

@@ -15,7 +15,7 @@ elizaLogger.info("Loading character settings:", {
     CHARACTER_PATH: process.env.CHARACTER_PATH,
     ARGV: process.argv,
     CHARACTER_ARG: process.argv.find((arg) => arg.startsWith("--character=")),
-    CWD: process.cwd(),
+    CWD: process.env.cwd,
 });
 
 interface Settings {
@@ -44,7 +44,7 @@ const isBrowser = (): boolean => {
  * @param {string} [startDir=process.cwd()] - Starting directory for the search
  * @returns {string|null} Path to the nearest .env file or null if not found
  */
-export function findNearestEnvFile(startDir = process.cwd()) {
+export function findNearestEnvFile(startDir = process.env.cwd) {
     if (isBrowser()) return null;
 
     let currentDir = startDir;

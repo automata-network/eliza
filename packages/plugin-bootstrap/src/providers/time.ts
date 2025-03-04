@@ -1,18 +1,9 @@
 import type { IAgentRuntime, Memory, Provider, State } from "@elizaos/core";
+import dayjs from "dayjs";
 
 const timeProvider: Provider = {
     get: async (_runtime: IAgentRuntime, _message: Memory, _state?: State) => {
-        const currentDate = new Date();
-
-        // Get UTC time since bots will be communicating with users around the global
-        const options = {
-            timeZone: "UTC",
-            dateStyle: "full" as const,
-            timeStyle: "long" as const,
-        };
-        const humanReadable = new Intl.DateTimeFormat("en-US", options).format(
-            currentDate
-        );
+        const humanReadable = dayjs().format("YYYY-MM-DD hh:mm:ss");
         return `The current date and time is ${humanReadable}. Please use this as your reference for any time-based operations or responses.`;
     },
 };

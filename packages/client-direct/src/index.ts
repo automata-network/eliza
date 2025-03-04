@@ -1,3 +1,6 @@
+import "dotenv/config";
+
+import fetch from "node-fetch";
 import bodyParser from "body-parser";
 import cors from "cors";
 import express, { type Request as ExpressRequest } from "express";
@@ -30,7 +33,7 @@ import OpenAI from "openai";
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        const uploadDir = path.join(process.cwd(), "data", "uploads");
+        const uploadDir = path.join(process.env.cwd, "data", "uploads");
         // Create the directory if it doesn't exist
         if (!fs.existsSync(uploadDir)) {
             fs.mkdirSync(uploadDir, { recursive: true });
@@ -128,11 +131,11 @@ export class DirectClient {
         // Serve both uploads and generated images
         this.app.use(
             "/media/uploads",
-            express.static(path.join(process.cwd(), "/data/uploads"))
+            express.static(path.join(process.env.cwd, "/data/uploads"))
         );
         this.app.use(
             "/media/generated",
-            express.static(path.join(process.cwd(), "/generatedImages"))
+            express.static(path.join(process.env.cwd, "/generatedImages"))
         );
 
         const apiRouter = createApiRouter(this.agents, this);
@@ -235,7 +238,7 @@ export class DirectClient {
                 const attachments: Media[] = [];
                 if (req.file) {
                     const filePath = path.join(
-                        process.cwd(),
+                        process.env.cwd,
                         "data",
                         "uploads",
                         req.file.filename
@@ -306,7 +309,7 @@ export class DirectClient {
                     ...userMessage,
                     userId: runtime.agentId,
                     content: response,
-                    embedding: getEmbeddingZeroVector(),
+                    embedding: await getEmbeddingZeroVector(),
                     createdAt: Date.now(),
                 };
 
@@ -334,6 +337,8 @@ export class DirectClient {
                 );
                 const shouldSuppressInitialMessage =
                     action?.suppressInitialMessage;
+
+                elizaLogger.debug("client direct response", response, message);
 
                 if (!shouldSuppressInitialMessage) {
                     if (message) {
@@ -459,13 +464,13 @@ export class DirectClient {
                                       nearby.map((item) => z.literal(item)) as [
                                           z.ZodLiteral<string>,
                                           z.ZodLiteral<string>,
-                                          ...z.ZodLiteral<string>[],
+                                          ...z.ZodLiteral<string>[]
                                       ]
                                   )
                                   .nullable()
                             : nearby.length === 1
-                              ? z.literal(nearby[0]).nullable()
-                              : z.null(); // Fallback for empty array
+                            ? z.literal(nearby[0]).nullable()
+                            : z.null(); // Fallback for empty array
 
                     const emoteSchema =
                         availableEmotes.length > 1
@@ -476,13 +481,13 @@ export class DirectClient {
                                       ) as [
                                           z.ZodLiteral<string>,
                                           z.ZodLiteral<string>,
-                                          ...z.ZodLiteral<string>[],
+                                          ...z.ZodLiteral<string>[]
                                       ]
                                   )
                                   .nullable()
                             : availableEmotes.length === 1
-                              ? z.literal(availableEmotes[0]).nullable()
-                              : z.null(); // Fallback for empty array
+                            ? z.literal(availableEmotes[0]).nullable()
+                            : z.null(); // Fallback for empty array
 
                     return z.object({
                         lookAt: lookAtSchema,
@@ -656,7 +661,7 @@ export class DirectClient {
             async (req: express.Request, res: express.Response) => {
                 const assetId = req.params.assetId;
                 const downloadDir = path.join(
-                    process.cwd(),
+                    process.env.cwd,
                     "downloads",
                     assetId
                 );
@@ -679,7 +684,9 @@ export class DirectClient {
 
                     if (!fileResponse.ok) {
                         throw new Error(
-                            `API responded with status ${fileResponse.status}: ${await fileResponse.text()}`
+                            `API responded with status ${
+                                fileResponse.status
+                            }: ${await fileResponse.text()}`
                         );
                     }
 

@@ -1,11 +1,6 @@
 import { embed, getEmbeddingZeroVector } from "./embedding.ts";
 import elizaLogger from "./logger.ts";
-import type {
-    IAgentRuntime,
-    IMemoryManager,
-    Memory,
-    UUID,
-} from "./types.ts";
+import type { IAgentRuntime, IMemoryManager, Memory, UUID } from "./types.ts";
 
 const defaultMatchThreshold = 0.1;
 const defaultMatchCount = 10;
@@ -70,7 +65,7 @@ export class MemoryManager implements IMemoryManager {
         } catch (error) {
             elizaLogger.error("Failed to generate embedding:", error);
             // Fallback to zero vector if embedding fails
-            memory.embedding = getEmbeddingZeroVector().slice();
+            memory.embedding = (await getEmbeddingZeroVector()).slice();
         }
 
         return memory;
@@ -180,8 +175,6 @@ export class MemoryManager implements IMemoryManager {
             return;
         }
 
-        elizaLogger.log("Creating Memory", memory.id, memory.content.text);
-
         await this.runtime.databaseAdapter.createMemory(
             memory,
             this.tableName,
@@ -189,12 +182,15 @@ export class MemoryManager implements IMemoryManager {
         );
     }
 
-    async getMemoriesByRoomIds(params: { roomIds: UUID[], limit?: number; }): Promise<Memory[]> {
+    async getMemoriesByRoomIds(params: {
+        roomIds: UUID[];
+        limit?: number;
+    }): Promise<Memory[]> {
         return await this.runtime.databaseAdapter.getMemoriesByRoomIds({
             tableName: this.tableName,
             agentId: this.runtime.agentId,
             roomIds: params.roomIds,
-            limit: params.limit
+            limit: params.limit,
         });
     }
 

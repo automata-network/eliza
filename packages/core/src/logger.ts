@@ -3,7 +3,6 @@ import pretty from "pino-pretty";
 
 import { parseBooleanFromText } from "./parsing.ts";
 
-
 const customLevels: Record<string, number> = {
     fatal: 60,
     error: 50,
@@ -53,7 +52,9 @@ const options = {
                     typeof arg === "string" ? arg : arg
                 );
                 const message = messageParts
-                    .filter((part) => typeof part === "string")
+                    .map((arg) =>
+                        typeof arg === "string" ? arg : JSON.stringify(arg)
+                    )
                     .join(" ");
                 const jsonParts = messageParts.filter(
                     (part) => typeof part === "object"
