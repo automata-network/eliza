@@ -236,18 +236,18 @@ export function extractAttributes(
 
 export const normalizeJsonString = (str: string) => {
     // Remove extra spaces after '{' and before '}'
-    str = str.replace(/\{\s+/, '{').replace(/\s+\}/, '}').trim();
+    str = str.replace(/\{\s+/, "{").replace(/\s+\}/, "}").trim();
 
     // "key": unquotedValue → "key": "unquotedValue"
     str = str.replace(
-      /("[\w\d_-]+")\s*: \s*(?!"|\[)([\s\S]+?)(?=(,\s*"|\}$))/g,
-      '$1: "$2"',
+        /("[\w\d_-]+")\s*: \s*(?!"|\[)([\s\S]+?)(?=(,\s*"|\}$))/g,
+        '$1: "$2"'
     );
 
     // "key": 'value' → "key": "value"
     str = str.replace(
-      /"([^"]+)"\s*:\s*'([^']*)'/g,
-      (_, key, value) => `"${key}": "${value}"`,
+        /"([^"]+)"\s*:\s*'([^']*)'/g,
+        (_, key, value) => `"${key}": "${value}"`
     );
 
     // "key": someWord → "key": "someWord"
@@ -267,11 +267,23 @@ export const normalizeJsonString = (str: string) => {
  */
 
 export function cleanJsonResponse(response: string): string {
-    return response
-        .replace(/```json\s*/g, "") // Remove ```json
-        .replace(/```\s*/g, "") // Remove any remaining ```
-        .replace(/(\r\n|\n|\r)/g, "") // Remove line breaks
-        .trim();
+    const jsonRegex =
+        /^\s*(\{(?:[^{}]|"([^"\\]*(\\.[^"\\]*)*)")*\}|\[(?:[^\[\]]|"([^"\\]*(\\.[^"\\]*)*)")*\])\s*$/m;
+    const matches = jsonRegex.exec(response);
+
+    if (matches != null) {
+        const lastMatch = matches.filter((item) => item != null).pop();
+
+        if (lastMatch) {
+            return lastMatch
+                .replace(/```json\s*/g, "") // Remove ```json
+                .replace(/```\s*/g, "") // Remove any remaining ```
+                .replace(/(\r\n|\n|\r)/g, "") // Remove line breaks
+                .trim();
+        }
+    }
+
+    return "";
 }
 
 export const postActionResponseFooter = `Choose any combination of [LIKE], [RETWEET], [QUOTE], and [REPLY] that are appropriate. Each action must be on its own line. Your response must only include the chosen actions.`;

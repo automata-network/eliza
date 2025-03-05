@@ -1,4 +1,9 @@
-import { elizaLogger, type IAgentRuntime, ServiceType } from "@elizaos/core";
+import {
+    elizaLogger,
+    type IAgentRuntime,
+    ServiceType,
+    settings,
+} from "@elizaos/core";
 import { Service } from "@elizaos/core";
 
 const wordsToPunish = [
@@ -119,6 +124,7 @@ interface MessageType {
             penalty_freq: number;
             penalty_present: number;
             n_predict: number;
+            system?: string;
         };
     };
 }
@@ -148,6 +154,7 @@ interface QueuedMessage {
 }
 
 export class NodeMobileModelService extends Service {
+    private runtime: IAgentRuntime | undefined;
     private messageQueue: QueuedMessage[] = [];
     private isProcessing = false;
 
@@ -156,8 +163,6 @@ export class NodeMobileModelService extends Service {
     private initPromise: Promise<void> | null = null;
     private initPromiseResolve: () => void | null = null;
     private inited = false;
-    private completionTimeoutTimer: NodeJS.Timeout | null = null;
-    private completionTimeoutDuration = 1000 * 60 * 5; // 5 minutes
     private embeddingTimeoutTimer: NodeJS.Timeout | null = null;
     private embeddingTimeoutDuration = 1000 * 60 * 5; // 5 minutes
 
@@ -243,6 +248,9 @@ export class NodeMobileModelService extends Service {
 
     async initialize(runtime: IAgentRuntime): Promise<void> {
         elizaLogger.info("Initializing LlamaService...");
+
+        this.runtime = runtime;
+
         return this.ensureInitialized();
     }
 
@@ -404,19 +412,6 @@ export class NodeMobileModelService extends Service {
         );
         const logit_bias = wordsToPunishTokens.map((token) => [token, -0.2]);
 
-        this.sendMessage("nodeMobileMessageCompletion", {
-            context,
-            params: {
-                temperature: Number(temperature),
-                stop,
-                logit_bias,
-                penalty_repeat: 1.2,
-                penalty_freq: frequency_penalty,
-                penalty_present: presence_penalty,
-                n_predict: max_tokens,
-            },
-        });
-
         console.log("Message completion started");
 
         this.on("nodeMobileMessageCompletionResp", this.handleCompletionResp);
@@ -426,17 +421,24 @@ export class NodeMobileModelService extends Service {
                 resolve(result);
 
                 console.log("Message completion ended");
-
-                if (this.completionTimeoutTimer) {
-                    clearTimeout(this.completionTimeoutTimer);
-                    this.completionTimeoutTimer = null;
-                }
             });
 
-            this.completionTimeoutTimer = setTimeout(() => {
-                reject(new Error("Completion timed out"));
-                this.completionTimeoutTimer = null;
-            }, this.completionTimeoutDuration);
+            this.sendMessage("nodeMobileMessageCompletion", {
+                context,
+                params: {
+                    temperature: Number(temperature),
+                    stop,
+                    logit_bias,
+                    penalty_repeat: 1.2,
+                    penalty_freq: frequency_penalty,
+                    penalty_present: presence_penalty,
+                    n_predict: max_tokens,
+                    system:
+                        this.runtime.character.system ??
+                        settings.SYSTEM_PROMPT ??
+                        undefined,
+                },
+            });
         });
 
         if (!response) {
@@ -469,8 +471,6 @@ export class NodeMobileModelService extends Service {
     }
 
     async getEmbeddingResponse(input: string): Promise<number[] | undefined> {
-        this.sendMessage("nodeMobileEmbedding", input);
-
         console.log("embedding started");
 
         const embedding = await new Promise<number[]>((resolve, reject) => {
@@ -484,6 +484,8 @@ export class NodeMobileModelService extends Service {
                     this.embeddingTimeoutTimer = null;
                 }
             });
+
+            this.sendMessage("nodeMobileEmbedding", input);
 
             this.embeddingTimeoutTimer = setTimeout(() => {
                 reject(new Error("Embedding timed out"));

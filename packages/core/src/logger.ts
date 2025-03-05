@@ -53,7 +53,13 @@ const options = {
                 );
                 const message = messageParts
                     .map((arg) =>
-                        typeof arg === "string" ? arg : JSON.stringify(arg)
+                        typeof arg === "string"
+                            ? arg
+                            : typeof arg === "object" &&
+                              arg !== null &&
+                              "toString" in arg
+                            ? arg.toString()
+                            : JSON.stringify(arg)
                     )
                     .join(" ");
                 const jsonParts = messageParts.filter(
