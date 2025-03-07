@@ -15,7 +15,6 @@ interface MessageType {
 
 interface MessageListenerType {
     nodeMobileModelConfigResp: (msg: ModelConfig) => void;
-    nodeMobileModelInited: (msg: void) => void;
     nodeMobileEmbedingResp: (msg: { embedding: number[] }) => void;
     nodeMobileIsModelInitedResp: (inited: boolean) => void;
     nodeMobileTokenizeResp: (result: { tokens: number[] }) => void;
@@ -35,11 +34,6 @@ class NodeMobileModelManager {
     private timeoutDuration = 1000 * 60 * 5; // 5 minutes
 
     private constructor() {
-        NodeMobileModelManager.once(
-            "nodeMobileModelInited",
-            this.handleModelInited
-        );
-
         NodeMobileModelManager.on(
             "nodeMobileIsModelInitedResp",
             this.handleModelCheck
@@ -85,9 +79,12 @@ class NodeMobileModelManager {
     public static getModelConfig(): Promise<ModelConfig> {
         return new Promise((resolve, reject) => {
             this.once("nodeMobileModelConfigResp", (msg) => {
+                elizaLogger.info("listen nodeMobileModelConfigResp");
+
                 resolve(msg);
             });
 
+            elizaLogger.info("send nodeMobileModelConfig");
             this.sendMessage("nodeMobileModelConfig", undefined);
         });
     }
@@ -136,18 +133,16 @@ class NodeMobileModelManager {
 
     private handleModelCheck = (inited: boolean): void => {
         if (inited) {
-            this.handleModelInited();
-        }
-    };
+            elizaLogger.debug(
+                "NodeMobileModelManager initialized successfully"
+            );
 
-    private handleModelInited = (): void => {
-        elizaLogger.debug("NodeMobileModelManager initialized successfully");
-
-        if (this.initPromiseResolve) {
-            this.initPromiseResolve();
-            this.initPromise = null;
-            this.initPromiseResolve = null;
-            this.inited = true;
+            if (this.initPromiseResolve) {
+                this.initPromiseResolve();
+                this.initPromise = null;
+                this.initPromiseResolve = null;
+                this.inited = true;
+            }
         }
     };
 

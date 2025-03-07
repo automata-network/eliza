@@ -213,13 +213,6 @@ export async function getEmbeddingZeroVector(): Promise<number[]> {
  */
 
 export async function embed(runtime: IAgentRuntime, input: string) {
-    try {
-        // Code throwing an exception
-        throw new Error();
-    } catch (e) {
-        elizaLogger.debug("embed stack", e.stack);
-    }
-
     elizaLogger.debug("Embedding request:", {
         modelProvider: runtime.character.modelProvider,
         useOpenAI: process.env.USE_OPENAI_EMBEDDING,

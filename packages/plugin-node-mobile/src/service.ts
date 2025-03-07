@@ -131,7 +131,6 @@ interface MessageType {
 
 interface MessageListenerType {
     nodeMobileIsModelInitedResp: (inited: boolean) => void;
-    nodeMobileModelInited: (msg: void) => void;
     nodeMobileEmbedingResp: (msg: { embedding: number[] }) => void;
     nodeMobileEmbedingError: (message: string) => void;
     nodeMobileTokenizeResp: (result: { tokens: number[] }) => void;
@@ -168,8 +167,6 @@ export class NodeMobileModelService extends Service {
 
     constructor() {
         super();
-
-        this.once("nodeMobileModelInited", this.handleModelInited);
 
         this.on("nodeMobileIsModelInitedResp", this.handleModelCheck);
     }
@@ -210,20 +207,6 @@ export class NodeMobileModelService extends Service {
         });
     }
 
-    private handleModelInited = () => {
-        elizaLogger.debug(
-            "NodeMobileModelService initialized successfully",
-            this.initPromiseResolve
-        );
-
-        if (this.initPromiseResolve) {
-            this.initPromiseResolve();
-            this.initPromise = null;
-            this.initPromiseResolve = null;
-            this.inited = true;
-        }
-    };
-
     private async ensureInitialized() {
         if (!this.inited) {
             elizaLogger.info(
@@ -237,7 +220,17 @@ export class NodeMobileModelService extends Service {
 
     private handleModelCheck = (inited: boolean): void => {
         if (inited) {
-            this.handleModelInited();
+            elizaLogger.debug(
+                "NodeMobileModelService initialized successfully",
+                this.initPromiseResolve
+            );
+
+            if (this.initPromiseResolve) {
+                this.initPromiseResolve();
+                this.initPromise = null;
+                this.initPromiseResolve = null;
+                this.inited = true;
+            }
         }
     };
 
