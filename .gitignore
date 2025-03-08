@@ -16,7 +16,6 @@ node-compile-cache
 .zed
 .DS_Store
 
-dist/
 # Allow models directory but ignore model files
 models/*.gguf
 pgLite/
@@ -91,7 +90,6 @@ lit-config.json
 
 # Configuration to exclude the extra and local_docs directories
 extra
-**/dist/**
 
 ton_nft_metadata/
 ton_nft_metadata/*
