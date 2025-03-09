@@ -1,33 +1,37 @@
 {
-  "name": "@elizaos/eliza-starter",
-  "version": "0.1.9",
-  "main": "dist/index.js",
-  "scripts": {
-    "build": "rm -rf dist && npx tsup --format esm --dts",
-    "start": "node dist/index-node.mjs",
-    "clean": "./scripts/clean.sh"
-  },
-  "dependencies": {
-    "@elizaos/adapter-sqlite-node-mobile": "https://gitpkg.vercel.app/automata-network/eliza/packages/adapter-sqlite-node-mobile?node-mobile",
-    "@elizaos/client-direct": "https://gitpkg.vercel.app/automata-network/eliza/packages/client-direct?node-mobile",
-    "@elizaos/client-node-mobile": "https://gitpkg.vercel.app/automata-network/eliza/packages/client-node-mobile?node-mobile",
-    "@elizaos/core": "https://gitpkg.vercel.app/automata-network/eliza/packages/core?node-mobile",
-    "@elizaos/plugin-bootstrap": "https://gitpkg.vercel.app/automata-network/eliza/packages/plugin-bootstrap?node-mobile",
-    "@elizaos/plugin-node-mobile": "https://gitpkg.vercel.app/automata-network/eliza/packages/plugin-node-mobile?node-mobile",
-    "@elizaos/plugin-verifiable-twitter": "github:automata-network/eliza-plugin-verifiable-twitter",
-    "dotenv": "^16.4.5",
-    "fs": "0.0.1-security",
-    "node-fetch": "^3.3.2",
-    "path": "0.12.7",
-    "rn-bridge": "https://gitpkg.vercel.app/automata-network/eliza/packages/rn-bridge?node-mobile"
-  },
-  "engines": {
-    "node": ">=22"
-  },
-  "devDependencies": {
-    "patch-package": "^8.0.0",
-    "ts-node": "10.9.2",
-    "tsup": "^8.4.0",
-    "typescript": "^5.8.2"
-  }
+    "name": "@elizaos/eliza-starter",
+    "version": "0.1.9",
+    "main": "dist/index.mjs",
+    "types": "dist/index.d.ts",
+    "files": [
+        "dist"
+    ],
+    "scripts": {
+        "build": "rm -rf dist && npx tsup --format esm --dts",
+        "start": "node dist/index-node.mjs",
+        "clean": "./scripts/clean.sh"
+    },
+    "dependencies": {
+        "@elizaos/adapter-sqlite-node-mobile": "https://gitpkg.vercel.app/automata-network/eliza/packages/adapter-sqlite-node-mobile?node-mobile",
+        "@elizaos/client-direct": "https://gitpkg.vercel.app/automata-network/eliza/packages/client-direct?node-mobile",
+        "@elizaos/client-node-mobile": "https://gitpkg.vercel.app/automata-network/eliza/packages/client-node-mobile?node-mobile",
+        "@elizaos/core": "https://gitpkg.vercel.app/automata-network/eliza/packages/core?node-mobile",
+        "@elizaos/plugin-bootstrap": "https://gitpkg.vercel.app/automata-network/eliza/packages/plugin-bootstrap?node-mobile",
+        "@elizaos/plugin-node-mobile": "https://gitpkg.vercel.app/automata-network/eliza/packages/plugin-node-mobile?node-mobile",
+        "@elizaos/plugin-verifiable-twitter": "github:automata-network/eliza-plugin-verifiable-twitter",
+        "dotenv": "^16.4.5",
+        "fs": "0.0.1-security",
+        "node-fetch": "^3.3.2",
+        "path": "0.12.7",
+        "rn-bridge": "https://gitpkg.vercel.app/automata-network/eliza/packages/rn-bridge?node-mobile"
+    },
+    "engines": {
+        "node": ">=22"
+    },
+    "devDependencies": {
+        "patch-package": "^8.0.0",
+        "ts-node": "10.9.2",
+        "tsup": "^8.4.0",
+        "typescript": "^5.8.2"
+    }
 }
