@@ -101,21 +101,11 @@ export async function trimTokens(
         return truncateTiktoken("gpt-4o", context, maxTokens);
     }
 
-    // Choose the truncation method based on tokenizer type
-    if (tokenizerType === TokenizerType.Auto) {
-        return truncateAuto(tokenizerModel, context, maxTokens);
-    }
-
-    if (tokenizerType === TokenizerType.TikToken) {
-        return truncateTiktoken(
-            tokenizerModel as TiktokenModel,
-            context,
-            maxTokens
-        );
-    }
-
-    elizaLogger.warn(`Unsupported tokenizer type: ${tokenizerType}`);
-    return truncateTiktoken("gpt-4o", context, maxTokens);
+    return truncateTiktoken(
+        tokenizerModel as TiktokenModel,
+        context,
+        maxTokens
+    );
 }
 
 async function truncateNodeMobile(context: string, maxTokens: number) {
@@ -153,33 +143,6 @@ async function truncateNodeMobile(context: string, maxTokens: number) {
 
         // Decode back to text - js-tiktoken decode() returns a string directly
         return truncatedContext;
-    } catch (error) {
-        elizaLogger.error("Error in trimTokens:", error);
-        // Return truncated string if tokenization fails
-        return context.slice(-maxTokens * 4); // Rough estimate of 4 chars per token
-    }
-}
-
-async function truncateAuto(
-    modelPath: string,
-    context: string,
-    maxTokens: number
-) {
-    try {
-        const { AutoTokenizer } = await import("@huggingface/transformers");
-        const tokenizer = await AutoTokenizer.from_pretrained(modelPath);
-        const tokens = tokenizer.encode(context);
-
-        // If already within limits, return unchanged
-        if (tokens.length <= maxTokens) {
-            return context;
-        }
-
-        // Keep the most recent tokens by slicing from the end
-        const truncatedTokens = tokens.slice(-maxTokens);
-
-        // Decode back to text - js-tiktoken decode() returns a string directly
-        return tokenizer.decode(truncatedTokens);
     } catch (error) {
         elizaLogger.error("Error in trimTokens:", error);
         // Return truncated string if tokenization fails

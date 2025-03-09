@@ -594,10 +594,10 @@ var VerifiableInferenceProvider = /* @__PURE__ */ ((VerifiableInferenceProvider2
   VerifiableInferenceProvider2["PRIMUS"] = "primus";
   return VerifiableInferenceProvider2;
 })(VerifiableInferenceProvider || {});
-var TokenizerType = /* @__PURE__ */ ((TokenizerType2) => {
-  TokenizerType2["Auto"] = "auto";
-  TokenizerType2["TikToken"] = "tiktoken";
-  return TokenizerType2;
+var TokenizerType = /* @__PURE__ */ ((TokenizerType3) => {
+  TokenizerType3["Auto"] = "auto";
+  TokenizerType3["TikToken"] = "tiktoken";
+  return TokenizerType3;
 })(TokenizerType || {});
 var TranscriptionProvider = /* @__PURE__ */ ((TranscriptionProvider2) => {
   TranscriptionProvider2["OpenAI"] = "openai";
@@ -2483,130 +2483,6 @@ function getEndpoint(provider) {
   return models[provider].endpoint;
 }
 
-// src/localembeddingManager.ts
-import path3 from "node:path";
-import { fileURLToPath as fileURLToPath2 } from "url";
-var LocalEmbeddingModelManager = class _LocalEmbeddingModelManager {
-  static instance;
-  model = null;
-  initPromise = null;
-  initializationLock = false;
-  constructor() {
-  }
-  static getInstance() {
-    if (!_LocalEmbeddingModelManager.instance) {
-      _LocalEmbeddingModelManager.instance = new _LocalEmbeddingModelManager();
-    }
-    return _LocalEmbeddingModelManager.instance;
-  }
-  async getRootPath() {
-    const __filename2 = fileURLToPath2(import.meta.url);
-    const __dirname2 = path3.dirname(__filename2);
-    const rootPath = path3.resolve(__dirname2, "..");
-    return rootPath.includes("/eliza/") ? rootPath.split("/eliza/")[0] + "/eliza/" : path3.resolve(__dirname2, "..");
-  }
-  async initialize() {
-    if (this.model) {
-      return;
-    }
-    if (this.initPromise) {
-      return this.initPromise;
-    }
-    if (this.initializationLock) {
-      while (this.initializationLock) {
-        await new Promise((resolve) => setTimeout(resolve, 100));
-      }
-      return;
-    }
-    this.initializationLock = true;
-    try {
-      this.initPromise = this.initializeModel();
-      await this.initPromise;
-    } finally {
-      this.initializationLock = false;
-      this.initPromise = null;
-    }
-  }
-  async initializeModel() {
-    const isNode = typeof process !== "undefined" && process.versions != null && process.versions.node != null;
-    if (!isNode) {
-      throw new Error("Local embedding not supported in browser");
-    }
-    try {
-      const fs3 = await import("fs");
-      const cacheDir = await this.getRootPath() + "/cache/";
-      if (!fs3.existsSync(cacheDir)) {
-        fs3.mkdirSync(cacheDir, { recursive: true });
-      }
-      logger_default.debug("Initializing BGE embedding model...");
-      const { FlagEmbedding, EmbeddingModel } = await import("fastembed");
-      this.model = await FlagEmbedding.init({
-        cacheDir,
-        model: EmbeddingModel.BGESmallENV15,
-        maxLength: 512
-      });
-      logger_default.debug("BGE model initialized successfully");
-    } catch (error) {
-      logger_default.error("Failed to initialize BGE model:", error);
-      throw error;
-    }
-  }
-  async generateEmbedding(input) {
-    if (!this.model) {
-      await this.initialize();
-    }
-    if (!this.model) {
-      throw new Error("Failed to initialize model");
-    }
-    try {
-      const embedding = await this.model.queryEmbed(input);
-      return this.processEmbedding(embedding);
-    } catch (error) {
-      logger_default.error("Embedding generation failed:", error);
-      throw error;
-    }
-  }
-  processEmbedding(embedding) {
-    let finalEmbedding;
-    if (ArrayBuffer.isView(embedding) && embedding.constructor === Float32Array) {
-      finalEmbedding = Array.from(embedding);
-    } else if (Array.isArray(embedding) && ArrayBuffer.isView(embedding[0]) && embedding[0].constructor === Float32Array) {
-      finalEmbedding = Array.from(embedding[0]);
-    } else if (Array.isArray(embedding)) {
-      finalEmbedding = embedding;
-    } else {
-      throw new Error(`Unexpected embedding format: ${typeof embedding}`);
-    }
-    finalEmbedding = finalEmbedding.map((n) => Number(n));
-    if (!Array.isArray(finalEmbedding) || finalEmbedding[0] === void 0) {
-      throw new Error(
-        "Invalid embedding format: must be an array starting with a number"
-      );
-    }
-    if (finalEmbedding.length !== 384) {
-      logger_default.warn(
-        `Unexpected embedding dimension: ${finalEmbedding.length}`
-      );
-    }
-    return finalEmbedding;
-  }
-  async reset() {
-    if (this.model) {
-      this.model = null;
-    }
-    this.initPromise = null;
-    this.initializationLock = false;
-  }
-  // For testing purposes
-  static resetInstance() {
-    if (_LocalEmbeddingModelManager.instance) {
-      _LocalEmbeddingModelManager.instance.reset();
-      _LocalEmbeddingModelManager.instance = null;
-    }
-  }
-};
-var localembeddingManager_default = LocalEmbeddingModelManager;
-
 // src/embedding.ts
 import fetch2 from "node-fetch";
 var EmbeddingProvider = {
@@ -2675,7 +2551,6 @@ async function getEmbeddingZeroVector() {
   let embeddingDimension = 384;
   if (settings_default.USE_NODEMOBILE_EMBEDDING?.toLowerCase() === "true") {
     const modelConfig = await getNodeMobileModelConfig();
-    console.log("modelConfig", modelConfig);
     embeddingDimension = modelConfig.dimensions;
   } else if (settings_default.USE_OPENAI_EMBEDDING?.toLowerCase() === "true") {
     embeddingDimension = getEmbeddingModelSettings(
@@ -2754,16 +2629,6 @@ async function embed(runtime, input) {
       dimensions: config2.dimensions
     });
   }
-  if (isNode) {
-    try {
-      return await getLocalEmbedding(input);
-    } catch (error) {
-      logger_default.warn(
-        "Local embedding failed, falling back to remote",
-        error
-      );
-    }
-  }
   return await getRemoteEmbedding(input, {
     model: config2.model,
     endpoint: runtime.character.modelEndpointOverride || getEndpoint(runtime.character.modelProvider),
@@ -2777,16 +2642,6 @@ async function embed(runtime, input) {
       return await embeddingManager.generateEmbedding(input2);
     } catch (error) {
       logger_default.error("NodeMobile embedding failed:", error);
-      throw error;
-    }
-  }
-  async function getLocalEmbedding(input2) {
-    logger_default.debug("DEBUG - Inside getLocalEmbedding function");
-    try {
-      const embeddingManager = localembeddingManager_default.getInstance();
-      return await embeddingManager.generateEmbedding(input2);
-    } catch (error) {
-      logger_default.error("Local embedding failed:", error);
       throw error;
     }
   }
@@ -4256,18 +4111,11 @@ async function trimTokens(context, maxTokens, runtime) {
   if (!tokenizerModel || !tokenizerType) {
     return truncateTiktoken("gpt-4o", context, maxTokens);
   }
-  if (tokenizerType === "auto" /* Auto */) {
-    return truncateAuto(tokenizerModel, context, maxTokens);
-  }
-  if (tokenizerType === "tiktoken" /* TikToken */) {
-    return truncateTiktoken(
-      tokenizerModel,
-      context,
-      maxTokens
-    );
-  }
-  elizaLogger.warn(`Unsupported tokenizer type: ${tokenizerType}`);
-  return truncateTiktoken("gpt-4o", context, maxTokens);
+  return truncateTiktoken(
+    tokenizerModel,
+    context,
+    maxTokens
+  );
 }
 async function truncateNodeMobile(context, maxTokens) {
   try {
@@ -4296,21 +4144,6 @@ async function truncateNodeMobile(context, maxTokens) {
       }
     );
     return truncatedContext;
-  } catch (error) {
-    elizaLogger.error("Error in trimTokens:", error);
-    return context.slice(-maxTokens * 4);
-  }
-}
-async function truncateAuto(modelPath, context, maxTokens) {
-  try {
-    const { AutoTokenizer } = await import("@huggingface/transformers");
-    const tokenizer = await AutoTokenizer.from_pretrained(modelPath);
-    const tokens = tokenizer.encode(context);
-    if (tokens.length <= maxTokens) {
-      return context;
-    }
-    const truncatedTokens = tokens.slice(-maxTokens);
-    return tokenizer.decode(truncatedTokens);
   } catch (error) {
     elizaLogger.error("Error in trimTokens:", error);
     return context.slice(-maxTokens * 4);
@@ -6891,8 +6724,8 @@ function getErrorMap() {
   return overrideErrorMap;
 }
 var makeIssue = (params) => {
-  const { data, path: path5, errorMaps, issueData } = params;
-  const fullPath = [...path5, ...issueData.path || []];
+  const { data, path: path4, errorMaps, issueData } = params;
+  const fullPath = [...path4, ...issueData.path || []];
   const fullIssue = {
     ...issueData,
     path: fullPath
@@ -7017,11 +6850,11 @@ var errorUtil;
 var _ZodEnum_cache;
 var _ZodNativeEnum_cache;
 var ParseInputLazyPath = class {
-  constructor(parent, value, path5, key) {
+  constructor(parent, value, path4, key) {
     this._cachedPath = [];
     this.parent = parent;
     this.data = value;
-    this._path = path5;
+    this._path = path4;
     this._key = key;
   }
   get path() {
@@ -10684,7 +10517,6 @@ async function get(runtime, message) {
   return knowledgeDocuments.filter((memory) => memory !== null).map((memory) => ({ id: memory.id, content: memory.content }));
 }
 async function set(runtime, item, chunkSize = 512, bleed = 20) {
-  const zeroVector = await getEmbeddingZeroVector();
   await runtime.documentsManager.createMemory({
     id: item.id,
     agentId: runtime.agentId,
@@ -10692,7 +10524,7 @@ async function set(runtime, item, chunkSize = 512, bleed = 20) {
     userId: runtime.agentId,
     createdAt: Date.now(),
     content: item.content,
-    embedding: zeroVector
+    embedding: await getEmbeddingZeroVector()
   });
   const preprocessed = preprocess(item.content.text);
   const fragments = await splitChunks(preprocessed, chunkSize, bleed);
@@ -11079,9 +10911,9 @@ var RAGKnowledgeManager = class {
       );
     }
   }
-  generateScopedId(path5, isShared) {
+  generateScopedId(path4, isShared) {
     const scope = isShared ? "shared" /* SHARED */ : "private" /* PRIVATE */;
-    const scopedPath = `${scope}-${path5}`;
+    const scopedPath = `${scope}-${path4}`;
     return stringToUuid(scopedPath);
   }
   async processFile(file) {
@@ -11468,7 +11300,6 @@ var AgentRuntime = class {
     this.verifiableInferenceAdapter = opts.verifiableInferenceAdapter;
   }
   async initialize() {
-    elizaLogger.info("runtime initialize1");
     for (const [serviceType, service] of this.services.entries()) {
       try {
         await service.initialize(this);
@@ -11484,9 +11315,7 @@ var AgentRuntime = class {
         throw error;
       }
     }
-    elizaLogger.info("runtime initialize2");
     if (this.character && this.character.knowledge && this.character.knowledge.length > 0) {
-      elizaLogger.info("runtime initialize3");
       elizaLogger.info(
         `[RAG Check] RAG Knowledge enabled: ${this.character.settings.ragKnowledge ? true : false}`
       );
@@ -11556,9 +11385,7 @@ var AgentRuntime = class {
         const stringKnowledge = this.character.knowledge.filter(
           (item) => typeof item === "string"
         );
-        elizaLogger.info("runtime initialize4");
         await this.processCharacterKnowledge(stringKnowledge);
-        elizaLogger.info("runtime initialize5");
       }
       elizaLogger.info(
         `[RAG Cleanup] Starting cleanup of deleted knowledge files`
@@ -12580,11 +12407,11 @@ function validateCharacterConfig(json) {
     if (error instanceof z.ZodError) {
       const groupedErrors = error.errors.reduce(
         (acc, err) => {
-          const path5 = err.path.join(".");
-          if (!acc[path5]) {
-            acc[path5] = [];
+          const path4 = err.path.join(".");
+          if (!acc[path4]) {
+            acc[path4] = [];
           }
-          acc[path5].push(err.message);
+          acc[path4].push(err.message);
           return acc;
         },
         {}
@@ -12603,7 +12430,7 @@ function validateCharacterConfig(json) {
 }
 
 // src/cache.ts
-import path4 from "path";
+import path3 from "path";
 import fs2 from "fs/promises";
 var MemoryCacheAdapter = class {
   data;
@@ -12626,15 +12453,15 @@ var FsCacheAdapter = class {
   }
   async get(key) {
     try {
-      return await fs2.readFile(path4.join(this.dataDir, key), "utf8");
+      return await fs2.readFile(path3.join(this.dataDir, key), "utf8");
     } catch {
       return void 0;
     }
   }
   async set(key, value) {
     try {
-      const filePath = path4.join(this.dataDir, key);
-      await fs2.mkdir(path4.dirname(filePath), { recursive: true });
+      const filePath = path3.join(this.dataDir, key);
+      await fs2.mkdir(path3.dirname(filePath), { recursive: true });
       await fs2.writeFile(filePath, value, "utf8");
     } catch (error) {
       console.error(error);
@@ -12642,7 +12469,7 @@ var FsCacheAdapter = class {
   }
   async delete(key) {
     try {
-      const filePath = path4.join(this.dataDir, key);
+      const filePath = path3.join(this.dataDir, key);
       await fs2.unlink(filePath);
     } catch {
     }

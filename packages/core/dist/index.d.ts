@@ -2757,32 +2757,32 @@ declare const CharacterSchema: z.ZodObject<{
         embeddingModel: z.ZodOptional<z.ZodString>;
     }, "strip", z.ZodTypeAny, {
         model?: string;
+        secrets?: Record<string, string>;
+        voice?: {
+            url?: string;
+            model?: string;
+        };
         modelConfig?: {
             temperature?: number;
             maxInputTokens?: number;
             maxOutputTokens?: number;
             frequency_penalty?: number;
             presence_penalty?: number;
-        };
-        secrets?: Record<string, string>;
-        voice?: {
-            url?: string;
-            model?: string;
         };
         embeddingModel?: string;
     }, {
         model?: string;
+        secrets?: Record<string, string>;
+        voice?: {
+            url?: string;
+            model?: string;
+        };
         modelConfig?: {
             temperature?: number;
             maxInputTokens?: number;
             maxOutputTokens?: number;
             frequency_penalty?: number;
             presence_penalty?: number;
-        };
-        secrets?: Record<string, string>;
-        voice?: {
-            url?: string;
-            model?: string;
         };
         embeddingModel?: string;
     }>>;
@@ -2875,17 +2875,17 @@ declare const CharacterSchema: z.ZodObject<{
     })[];
     settings?: {
         model?: string;
+        secrets?: Record<string, string>;
+        voice?: {
+            url?: string;
+            model?: string;
+        };
         modelConfig?: {
             temperature?: number;
             maxInputTokens?: number;
             maxOutputTokens?: number;
             frequency_penalty?: number;
             presence_penalty?: number;
-        };
-        secrets?: Record<string, string>;
-        voice?: {
-            url?: string;
-            model?: string;
         };
         embeddingModel?: string;
     };
@@ -2956,17 +2956,17 @@ declare const CharacterSchema: z.ZodObject<{
     })[];
     settings?: {
         model?: string;
+        secrets?: Record<string, string>;
+        voice?: {
+            url?: string;
+            model?: string;
+        };
         modelConfig?: {
             temperature?: number;
             maxInputTokens?: number;
             maxOutputTokens?: number;
             frequency_penalty?: number;
             presence_penalty?: number;
-        };
-        secrets?: Record<string, string>;
-        voice?: {
-            url?: string;
-            model?: string;
         };
         embeddingModel?: string;
     };
