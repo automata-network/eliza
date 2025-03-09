@@ -10,24 +10,50 @@ import type {
     UUID,
     RAGKnowledgeItem,
 } from "@elizaos/core";
+import { v4 as uuidv4 } from "uuid";
 
 interface MessageType {
     nodeMobileSQLLite: {
+        uuid: string;
         func: string;
         params: any[];
     };
 }
 
 interface MessageListenerType {
-    nodeMobileSQLLiteResp: (data: { result: any }) => void;
-    nodeMobileSQLLiteRespError: (data: { message: string }) => void;
+    nodeMobileSQLLiteResp: (data: { uuid: string; result: any }) => void;
+    nodeMobileSQLLiteRespError: (data: {
+        uuid: string;
+        message: string;
+    }) => void;
 }
 
 export class SqliteDatabaseAdapter implements IDatabaseCacheAdapter {
     private dbPath: string;
+    private promises: {
+        [uuid: string]: {
+            resolve: (data: any) => void;
+            reject: (err: Error) => void;
+        };
+    };
 
     constructor(dbPath: string) {
         this.dbPath = dbPath;
+        this.on("nodeMobileSQLLiteResp", (data) => {
+            const { uuid, result } = data;
+            if (this.promises[uuid]) {
+                this.promises[uuid].resolve(result);
+                delete this.promises[uuid];
+            }
+        });
+        this.on("nodeMobileSQLLiteRespError", (data) => {
+            const { uuid, message } = data;
+            if (this.promises[uuid]) {
+                this.promises[uuid].reject(new Error(message));
+                delete this.promises[uuid];
+            }
+        });
+        this.promises = {};
     }
 
     private sendMessage<T extends keyof MessageType>(
@@ -68,15 +94,11 @@ export class SqliteDatabaseAdapter implements IDatabaseCacheAdapter {
 
     async getRoom(roomId: UUID): Promise<UUID | null> {
         return new Promise<any>((resolve, reject) => {
-            this.once("nodeMobileSQLLiteResp", (data) => {
-                resolve(data.result);
-            });
-
-            this.once("nodeMobileSQLLiteRespError", (data) => {
-                reject(new Error(data.message));
-            });
+            const uuid = uuidv4();
+            this.promises[uuid] = { resolve, reject };
 
             this.sendMessage("nodeMobileSQLLite", {
+                uuid,
                 func: "getRoom",
                 params: [roomId],
             });
@@ -85,15 +107,11 @@ export class SqliteDatabaseAdapter implements IDatabaseCacheAdapter {
 
     async getParticipantsForAccount(userId: UUID): Promise<Participant[]> {
         return new Promise<any>((resolve, reject) => {
-            this.once("nodeMobileSQLLiteResp", (data) => {
-                resolve(data.result);
-            });
-
-            this.once("nodeMobileSQLLiteRespError", (data) => {
-                reject(new Error(data.message));
-            });
+            const uuid = uuidv4();
+            this.promises[uuid] = { resolve, reject };
 
             this.sendMessage("nodeMobileSQLLite", {
+                uuid,
                 func: "getParticipantsForAccount",
                 params: [userId],
             });
@@ -102,15 +120,11 @@ export class SqliteDatabaseAdapter implements IDatabaseCacheAdapter {
 
     async getParticipantsForRoom(roomId: UUID): Promise<UUID[]> {
         return new Promise<any>((resolve, reject) => {
-            this.once("nodeMobileSQLLiteResp", (data) => {
-                resolve(data.result);
-            });
-
-            this.once("nodeMobileSQLLiteRespError", (data) => {
-                reject(new Error(data.message));
-            });
+            const uuid = uuidv4();
+            this.promises[uuid] = { resolve, reject };
 
             this.sendMessage("nodeMobileSQLLite", {
+                uuid,
                 func: "getParticipantsForRoom",
                 params: [roomId],
             });
@@ -122,15 +136,11 @@ export class SqliteDatabaseAdapter implements IDatabaseCacheAdapter {
         userId: UUID
     ): Promise<"FOLLOWED" | "MUTED" | null> {
         return new Promise<any>((resolve, reject) => {
-            this.once("nodeMobileSQLLiteResp", (data) => {
-                resolve(data.result);
-            });
-
-            this.once("nodeMobileSQLLiteRespError", (data) => {
-                reject(new Error(data.message));
-            });
+            const uuid = uuidv4();
+            this.promises[uuid] = { resolve, reject };
 
             this.sendMessage("nodeMobileSQLLite", {
+                uuid,
                 func: "getParticipantUserState",
                 params: [roomId, userId],
             });
@@ -143,15 +153,11 @@ export class SqliteDatabaseAdapter implements IDatabaseCacheAdapter {
         state: "FOLLOWED" | "MUTED" | null
     ): Promise<void> {
         return new Promise<any>((resolve, reject) => {
-            this.once("nodeMobileSQLLiteResp", (data) => {
-                resolve(data.result);
-            });
-
-            this.once("nodeMobileSQLLiteRespError", (data) => {
-                reject(new Error(data.message));
-            });
+            const uuid = uuidv4();
+            this.promises[uuid] = { resolve, reject };
 
             this.sendMessage("nodeMobileSQLLite", {
+                uuid,
                 func: "setParticipantUserState",
                 params: [roomId, userId, state],
             });
@@ -160,15 +166,11 @@ export class SqliteDatabaseAdapter implements IDatabaseCacheAdapter {
 
     async init() {
         return new Promise<any>((resolve, reject) => {
-            this.once("nodeMobileSQLLiteResp", (data) => {
-                resolve(data.result);
-            });
-
-            this.once("nodeMobileSQLLiteRespError", (data) => {
-                reject(new Error(data.message));
-            });
+            const uuid = uuidv4();
+            this.promises[uuid] = { resolve, reject };
 
             this.sendMessage("nodeMobileSQLLite", {
+                uuid,
                 func: "init",
                 params: [this.dbPath],
             });
@@ -177,15 +179,11 @@ export class SqliteDatabaseAdapter implements IDatabaseCacheAdapter {
 
     async close() {
         return new Promise<any>((resolve, reject) => {
-            this.once("nodeMobileSQLLiteResp", (data) => {
-                resolve(data.result);
-            });
-
-            this.once("nodeMobileSQLLiteRespError", (data) => {
-                reject(new Error(data.message));
-            });
+            const uuid = uuidv4();
+            this.promises[uuid] = { resolve, reject };
 
             this.sendMessage("nodeMobileSQLLite", {
+                uuid,
                 func: "close",
                 params: [],
             });
@@ -194,15 +192,11 @@ export class SqliteDatabaseAdapter implements IDatabaseCacheAdapter {
 
     async getAccountById(userId: UUID): Promise<Account | null> {
         return new Promise<any>((resolve, reject) => {
-            this.once("nodeMobileSQLLiteResp", (data) => {
-                resolve(data.result);
-            });
-
-            this.once("nodeMobileSQLLiteRespError", (data) => {
-                reject(new Error(data.message));
-            });
+            const uuid = uuidv4();
+            this.promises[uuid] = { resolve, reject };
 
             this.sendMessage("nodeMobileSQLLite", {
+                uuid,
                 func: "getAccountById",
                 params: [userId],
             });
@@ -211,15 +205,11 @@ export class SqliteDatabaseAdapter implements IDatabaseCacheAdapter {
 
     async createAccount(account: Account): Promise<boolean> {
         return new Promise<any>((resolve, reject) => {
-            this.once("nodeMobileSQLLiteResp", (data) => {
-                resolve(data.result);
-            });
-
-            this.once("nodeMobileSQLLiteRespError", (data) => {
-                reject(new Error(data.message));
-            });
+            const uuid = uuidv4();
+            this.promises[uuid] = { resolve, reject };
 
             this.sendMessage("nodeMobileSQLLite", {
+                uuid,
                 func: "createAccount",
                 params: [account],
             });
@@ -228,15 +218,11 @@ export class SqliteDatabaseAdapter implements IDatabaseCacheAdapter {
 
     async getActorDetails(params: { roomId: UUID }): Promise<Actor[]> {
         return new Promise<any>((resolve, reject) => {
-            this.once("nodeMobileSQLLiteResp", (data) => {
-                resolve(data.result);
-            });
-
-            this.once("nodeMobileSQLLiteRespError", (data) => {
-                reject(new Error(data.message));
-            });
+            const uuid = uuidv4();
+            this.promises[uuid] = { resolve, reject };
 
             this.sendMessage("nodeMobileSQLLite", {
+                uuid,
                 func: "getActorDetails",
                 params: [params],
             });
@@ -250,15 +236,11 @@ export class SqliteDatabaseAdapter implements IDatabaseCacheAdapter {
         limit?: number;
     }): Promise<Memory[]> {
         return new Promise<any>((resolve, reject) => {
-            this.once("nodeMobileSQLLiteResp", (data) => {
-                resolve(data.result);
-            });
-
-            this.once("nodeMobileSQLLiteRespError", (data) => {
-                reject(new Error(data.message));
-            });
+            const uuid = uuidv4();
+            this.promises[uuid] = { resolve, reject };
 
             this.sendMessage("nodeMobileSQLLite", {
+                uuid,
                 func: "getMemoriesByRoomIds",
                 params: [params],
             });
@@ -267,15 +249,11 @@ export class SqliteDatabaseAdapter implements IDatabaseCacheAdapter {
 
     async getMemoryById(memoryId: UUID): Promise<Memory | null> {
         return new Promise<any>((resolve, reject) => {
-            this.once("nodeMobileSQLLiteResp", (data) => {
-                resolve(data.result);
-            });
-
-            this.once("nodeMobileSQLLiteRespError", (data) => {
-                reject(new Error(data.message));
-            });
+            const uuid = uuidv4();
+            this.promises[uuid] = { resolve, reject };
 
             this.sendMessage("nodeMobileSQLLite", {
+                uuid,
                 func: "getMemoryById",
                 params: [memoryId],
             });
@@ -287,15 +265,11 @@ export class SqliteDatabaseAdapter implements IDatabaseCacheAdapter {
         tableName?: string
     ): Promise<Memory[]> {
         return new Promise<any>((resolve, reject) => {
-            this.once("nodeMobileSQLLiteResp", (data) => {
-                resolve(data.result);
-            });
-
-            this.once("nodeMobileSQLLiteRespError", (data) => {
-                reject(new Error(data.message));
-            });
+            const uuid = uuidv4();
+            this.promises[uuid] = { resolve, reject };
 
             this.sendMessage("nodeMobileSQLLite", {
+                uuid,
                 func: "getMemoriesByIds",
                 params: [memoryIds, tableName],
             });
@@ -304,15 +278,11 @@ export class SqliteDatabaseAdapter implements IDatabaseCacheAdapter {
 
     async createMemory(memory: Memory, tableName: string): Promise<void> {
         return new Promise<any>((resolve, reject) => {
-            this.once("nodeMobileSQLLiteResp", (data) => {
-                resolve(data.result);
-            });
-
-            this.once("nodeMobileSQLLiteRespError", (data) => {
-                reject(new Error(data.message));
-            });
+            const uuid = uuidv4();
+            this.promises[uuid] = { resolve, reject };
 
             this.sendMessage("nodeMobileSQLLite", {
+                uuid,
                 func: "createMemory",
                 params: [memory, tableName],
             });
@@ -329,15 +299,11 @@ export class SqliteDatabaseAdapter implements IDatabaseCacheAdapter {
         unique: boolean;
     }): Promise<Memory[]> {
         return new Promise<any>((resolve, reject) => {
-            this.once("nodeMobileSQLLiteResp", (data) => {
-                resolve(data.result);
-            });
-
-            this.once("nodeMobileSQLLiteRespError", (data) => {
-                reject(new Error(data.message));
-            });
+            const uuid = uuidv4();
+            this.promises[uuid] = { resolve, reject };
 
             this.sendMessage("nodeMobileSQLLite", {
+                uuid,
                 func: "searchMemories",
                 params: [params],
             });
@@ -356,15 +322,11 @@ export class SqliteDatabaseAdapter implements IDatabaseCacheAdapter {
         }
     ): Promise<Memory[]> {
         return new Promise<any>((resolve, reject) => {
-            this.once("nodeMobileSQLLiteResp", (data) => {
-                resolve(data.result);
-            });
-
-            this.once("nodeMobileSQLLiteRespError", (data) => {
-                reject(new Error(data.message));
-            });
+            const uuid = uuidv4();
+            this.promises[uuid] = { resolve, reject };
 
             this.sendMessage("nodeMobileSQLLite", {
+                uuid,
                 func: "searchMemoriesByEmbedding",
                 params: [embedding, params],
             });
@@ -380,15 +342,11 @@ export class SqliteDatabaseAdapter implements IDatabaseCacheAdapter {
         query_match_count: number;
     }): Promise<{ embedding: number[]; levenshtein_score: number }[]> {
         return new Promise<any>((resolve, reject) => {
-            this.once("nodeMobileSQLLiteResp", (data) => {
-                resolve(data.result);
-            });
-
-            this.once("nodeMobileSQLLiteRespError", (data) => {
-                reject(new Error(data.message));
-            });
+            const uuid = uuidv4();
+            this.promises[uuid] = { resolve, reject };
 
             this.sendMessage("nodeMobileSQLLite", {
+                uuid,
                 func: "getCachedEmbeddings",
                 params: [opts],
             });
@@ -400,15 +358,11 @@ export class SqliteDatabaseAdapter implements IDatabaseCacheAdapter {
         status: GoalStatus;
     }): Promise<void> {
         return new Promise<any>((resolve, reject) => {
-            this.once("nodeMobileSQLLiteResp", (data) => {
-                resolve(data.result);
-            });
-
-            this.once("nodeMobileSQLLiteRespError", (data) => {
-                reject(new Error(data.message));
-            });
+            const uuid = uuidv4();
+            this.promises[uuid] = { resolve, reject };
 
             this.sendMessage("nodeMobileSQLLite", {
+                uuid,
                 func: "updateGoalStatus",
                 params: [params],
             });
@@ -422,15 +376,11 @@ export class SqliteDatabaseAdapter implements IDatabaseCacheAdapter {
         type: string;
     }): Promise<void> {
         return new Promise<any>((resolve, reject) => {
-            this.once("nodeMobileSQLLiteResp", (data) => {
-                resolve(data.result);
-            });
-
-            this.once("nodeMobileSQLLiteRespError", (data) => {
-                reject(new Error(data.message));
-            });
+            const uuid = uuidv4();
+            this.promises[uuid] = { resolve, reject };
 
             this.sendMessage("nodeMobileSQLLite", {
+                uuid,
                 func: "log",
                 params: [params],
             });
@@ -447,15 +397,11 @@ export class SqliteDatabaseAdapter implements IDatabaseCacheAdapter {
         end?: number;
     }): Promise<Memory[]> {
         return new Promise<any>((resolve, reject) => {
-            this.once("nodeMobileSQLLiteResp", (data) => {
-                resolve(data.result);
-            });
-
-            this.once("nodeMobileSQLLiteRespError", (data) => {
-                reject(new Error(data.message));
-            });
+            const uuid = uuidv4();
+            this.promises[uuid] = { resolve, reject };
 
             this.sendMessage("nodeMobileSQLLite", {
+                uuid,
                 func: "getMemories",
                 params: [params],
             });
@@ -464,15 +410,11 @@ export class SqliteDatabaseAdapter implements IDatabaseCacheAdapter {
 
     async removeMemory(memoryId: UUID, tableName: string): Promise<void> {
         return new Promise<any>((resolve, reject) => {
-            this.once("nodeMobileSQLLiteResp", (data) => {
-                resolve(data.result);
-            });
-
-            this.once("nodeMobileSQLLiteRespError", (data) => {
-                reject(new Error(data.message));
-            });
+            const uuid = uuidv4();
+            this.promises[uuid] = { resolve, reject };
 
             this.sendMessage("nodeMobileSQLLite", {
+                uuid,
                 func: "removeMemory",
                 params: [memoryId, tableName],
             });
@@ -481,15 +423,11 @@ export class SqliteDatabaseAdapter implements IDatabaseCacheAdapter {
 
     async removeAllMemories(roomId: UUID, tableName: string): Promise<void> {
         return new Promise<any>((resolve, reject) => {
-            this.once("nodeMobileSQLLiteResp", (data) => {
-                resolve(data.result);
-            });
-
-            this.once("nodeMobileSQLLiteRespError", (data) => {
-                reject(new Error(data.message));
-            });
+            const uuid = uuidv4();
+            this.promises[uuid] = { resolve, reject };
 
             this.sendMessage("nodeMobileSQLLite", {
+                uuid,
                 func: "removeAllMemories",
                 params: [roomId, tableName],
             });
@@ -502,15 +440,11 @@ export class SqliteDatabaseAdapter implements IDatabaseCacheAdapter {
         tableName = ""
     ): Promise<number> {
         return new Promise<any>((resolve, reject) => {
-            this.once("nodeMobileSQLLiteResp", (data) => {
-                resolve(data.result);
-            });
-
-            this.once("nodeMobileSQLLiteRespError", (data) => {
-                reject(new Error(data.message));
-            });
+            const uuid = uuidv4();
+            this.promises[uuid] = { resolve, reject };
 
             this.sendMessage("nodeMobileSQLLite", {
+                uuid,
                 func: "countMemories",
                 params: [roomId, unique, tableName],
             });
@@ -524,15 +458,11 @@ export class SqliteDatabaseAdapter implements IDatabaseCacheAdapter {
         count?: number;
     }): Promise<Goal[]> {
         return new Promise<any>((resolve, reject) => {
-            this.once("nodeMobileSQLLiteResp", (data) => {
-                resolve(data.result);
-            });
-
-            this.once("nodeMobileSQLLiteRespError", (data) => {
-                reject(new Error(data.message));
-            });
+            const uuid = uuidv4();
+            this.promises[uuid] = { resolve, reject };
 
             this.sendMessage("nodeMobileSQLLite", {
+                uuid,
                 func: "getGoals",
                 params: [params],
             });
@@ -541,15 +471,11 @@ export class SqliteDatabaseAdapter implements IDatabaseCacheAdapter {
 
     async updateGoal(goal: Goal): Promise<void> {
         return new Promise<any>((resolve, reject) => {
-            this.once("nodeMobileSQLLiteResp", (data) => {
-                resolve(data.result);
-            });
-
-            this.once("nodeMobileSQLLiteRespError", (data) => {
-                reject(new Error(data.message));
-            });
+            const uuid = uuidv4();
+            this.promises[uuid] = { resolve, reject };
 
             this.sendMessage("nodeMobileSQLLite", {
+                uuid,
                 func: "updateGoal",
                 params: [goal],
             });
@@ -558,15 +484,11 @@ export class SqliteDatabaseAdapter implements IDatabaseCacheAdapter {
 
     async removeGoal(goalId: UUID): Promise<void> {
         return new Promise<any>((resolve, reject) => {
-            this.once("nodeMobileSQLLiteResp", (data) => {
-                resolve(data.result);
-            });
-
-            this.once("nodeMobileSQLLiteRespError", (data) => {
-                reject(new Error(data.message));
-            });
+            const uuid = uuidv4();
+            this.promises[uuid] = { resolve, reject };
 
             this.sendMessage("nodeMobileSQLLite", {
+                uuid,
                 func: "removeGoal",
                 params: [goalId],
             });
@@ -575,15 +497,11 @@ export class SqliteDatabaseAdapter implements IDatabaseCacheAdapter {
 
     async removeAllGoals(roomId: UUID): Promise<void> {
         return new Promise<any>((resolve, reject) => {
-            this.once("nodeMobileSQLLiteResp", (data) => {
-                resolve(data.result);
-            });
-
-            this.once("nodeMobileSQLLiteRespError", (data) => {
-                reject(new Error(data.message));
-            });
+            const uuid = uuidv4();
+            this.promises[uuid] = { resolve, reject };
 
             this.sendMessage("nodeMobileSQLLite", {
+                uuid,
                 func: "removeAllGoals",
                 params: [roomId],
             });
@@ -592,15 +510,11 @@ export class SqliteDatabaseAdapter implements IDatabaseCacheAdapter {
 
     async createRoom(roomId?: UUID): Promise<UUID> {
         return new Promise<any>((resolve, reject) => {
-            this.once("nodeMobileSQLLiteResp", (data) => {
-                resolve(data.result);
-            });
-
-            this.once("nodeMobileSQLLiteRespError", (data) => {
-                reject(new Error(data.message));
-            });
+            const uuid = uuidv4();
+            this.promises[uuid] = { resolve, reject };
 
             this.sendMessage("nodeMobileSQLLite", {
+                uuid,
                 func: "createRoom",
                 params: [roomId],
             });
@@ -609,15 +523,11 @@ export class SqliteDatabaseAdapter implements IDatabaseCacheAdapter {
 
     async removeRoom(roomId: UUID): Promise<void> {
         return new Promise<any>((resolve, reject) => {
-            this.once("nodeMobileSQLLiteResp", (data) => {
-                resolve(data.result);
-            });
-
-            this.once("nodeMobileSQLLiteRespError", (data) => {
-                reject(new Error(data.message));
-            });
+            const uuid = uuidv4();
+            this.promises[uuid] = { resolve, reject };
 
             this.sendMessage("nodeMobileSQLLite", {
+                uuid,
                 func: "removeRoom",
                 params: [roomId],
             });
@@ -626,15 +536,11 @@ export class SqliteDatabaseAdapter implements IDatabaseCacheAdapter {
 
     async getRoomsForParticipant(userId: UUID): Promise<UUID[]> {
         return new Promise<any>((resolve, reject) => {
-            this.once("nodeMobileSQLLiteResp", (data) => {
-                resolve(data.result);
-            });
-
-            this.once("nodeMobileSQLLiteRespError", (data) => {
-                reject(new Error(data.message));
-            });
+            const uuid = uuidv4();
+            this.promises[uuid] = { resolve, reject };
 
             this.sendMessage("nodeMobileSQLLite", {
+                uuid,
                 func: "getRoomsForParticipant",
                 params: [userId],
             });
@@ -643,15 +549,11 @@ export class SqliteDatabaseAdapter implements IDatabaseCacheAdapter {
 
     async getRoomsForParticipants(userIds: UUID[]): Promise<UUID[]> {
         return new Promise<any>((resolve, reject) => {
-            this.once("nodeMobileSQLLiteResp", (data) => {
-                resolve(data.result);
-            });
-
-            this.once("nodeMobileSQLLiteRespError", (data) => {
-                reject(new Error(data.message));
-            });
+            const uuid = uuidv4();
+            this.promises[uuid] = { resolve, reject };
 
             this.sendMessage("nodeMobileSQLLite", {
+                uuid,
                 func: "getRoomsForParticipants",
                 params: [userIds],
             });
@@ -660,15 +562,11 @@ export class SqliteDatabaseAdapter implements IDatabaseCacheAdapter {
 
     async addParticipant(userId: UUID, roomId: UUID): Promise<boolean> {
         return new Promise<any>((resolve, reject) => {
-            this.once("nodeMobileSQLLiteResp", (data) => {
-                resolve(data.result);
-            });
-
-            this.once("nodeMobileSQLLiteRespError", (data) => {
-                reject(new Error(data.message));
-            });
+            const uuid = uuidv4();
+            this.promises[uuid] = { resolve, reject };
 
             this.sendMessage("nodeMobileSQLLite", {
+                uuid,
                 func: "addParticipant",
                 params: [userId, roomId],
             });
@@ -677,15 +575,11 @@ export class SqliteDatabaseAdapter implements IDatabaseCacheAdapter {
 
     async removeParticipant(userId: UUID, roomId: UUID): Promise<boolean> {
         return new Promise<any>((resolve, reject) => {
-            this.once("nodeMobileSQLLiteResp", (data) => {
-                resolve(data.result);
-            });
-
-            this.once("nodeMobileSQLLiteRespError", (data) => {
-                reject(new Error(data.message));
-            });
+            const uuid = uuidv4();
+            this.promises[uuid] = { resolve, reject };
 
             this.sendMessage("nodeMobileSQLLite", {
+                uuid,
                 func: "removeParticipant",
                 params: [userId, roomId],
             });
@@ -697,15 +591,11 @@ export class SqliteDatabaseAdapter implements IDatabaseCacheAdapter {
         userB: UUID;
     }): Promise<boolean> {
         return new Promise<any>((resolve, reject) => {
-            this.once("nodeMobileSQLLiteResp", (data) => {
-                resolve(data.result);
-            });
-
-            this.once("nodeMobileSQLLiteRespError", (data) => {
-                reject(new Error(data.message));
-            });
+            const uuid = uuidv4();
+            this.promises[uuid] = { resolve, reject };
 
             this.sendMessage("nodeMobileSQLLite", {
+                uuid,
                 func: "createRelationship",
                 params: [params],
             });
@@ -717,15 +607,11 @@ export class SqliteDatabaseAdapter implements IDatabaseCacheAdapter {
         userB: UUID;
     }): Promise<Relationship | null> {
         return new Promise<any>((resolve, reject) => {
-            this.once("nodeMobileSQLLiteResp", (data) => {
-                resolve(data.result);
-            });
-
-            this.once("nodeMobileSQLLiteRespError", (data) => {
-                reject(new Error(data.message));
-            });
+            const uuid = uuidv4();
+            this.promises[uuid] = { resolve, reject };
 
             this.sendMessage("nodeMobileSQLLite", {
+                uuid,
                 func: "getRelationship",
                 params: [params],
             });
@@ -734,15 +620,11 @@ export class SqliteDatabaseAdapter implements IDatabaseCacheAdapter {
 
     async getRelationships(params: { userId: UUID }): Promise<Relationship[]> {
         return new Promise<any>((resolve, reject) => {
-            this.once("nodeMobileSQLLiteResp", (data) => {
-                resolve(data.result);
-            });
-
-            this.once("nodeMobileSQLLiteRespError", (data) => {
-                reject(new Error(data.message));
-            });
+            const uuid = uuidv4();
+            this.promises[uuid] = { resolve, reject };
 
             this.sendMessage("nodeMobileSQLLite", {
+                uuid,
                 func: "getRelationships",
                 params: [params],
             });
@@ -754,15 +636,11 @@ export class SqliteDatabaseAdapter implements IDatabaseCacheAdapter {
         agentId: UUID;
     }): Promise<string | undefined> {
         return new Promise<any>((resolve, reject) => {
-            this.once("nodeMobileSQLLiteResp", (data) => {
-                resolve(data.result);
-            });
-
-            this.once("nodeMobileSQLLiteRespError", (data) => {
-                reject(new Error(data.message));
-            });
+            const uuid = uuidv4();
+            this.promises[uuid] = { resolve, reject };
 
             this.sendMessage("nodeMobileSQLLite", {
+                uuid,
                 func: "getCache",
                 params: [params],
             });
@@ -775,15 +653,11 @@ export class SqliteDatabaseAdapter implements IDatabaseCacheAdapter {
         value: string;
     }): Promise<boolean> {
         return new Promise<any>((resolve, reject) => {
-            this.once("nodeMobileSQLLiteResp", (data) => {
-                resolve(data.result);
-            });
-
-            this.once("nodeMobileSQLLiteRespError", (data) => {
-                reject(new Error(data.message));
-            });
+            const uuid = uuidv4();
+            this.promises[uuid] = { resolve, reject };
 
             this.sendMessage("nodeMobileSQLLite", {
+                uuid,
                 func: "setCache",
                 params: [params],
             });
@@ -795,15 +669,11 @@ export class SqliteDatabaseAdapter implements IDatabaseCacheAdapter {
         agentId: UUID;
     }): Promise<boolean> {
         return new Promise<any>((resolve, reject) => {
-            this.once("nodeMobileSQLLiteResp", (data) => {
-                resolve(data.result);
-            });
-
-            this.once("nodeMobileSQLLiteRespError", (data) => {
-                reject(new Error(data.message));
-            });
+            const uuid = uuidv4();
+            this.promises[uuid] = { resolve, reject };
 
             this.sendMessage("nodeMobileSQLLite", {
+                uuid,
                 func: "deleteCache",
                 params: [params],
             });
@@ -817,15 +687,11 @@ export class SqliteDatabaseAdapter implements IDatabaseCacheAdapter {
         query?: string;
     }): Promise<RAGKnowledgeItem[]> {
         return new Promise<any>((resolve, reject) => {
-            this.once("nodeMobileSQLLiteResp", (data) => {
-                resolve(data.result);
-            });
-
-            this.once("nodeMobileSQLLiteRespError", (data) => {
-                reject(new Error(data.message));
-            });
+            const uuid = uuidv4();
+            this.promises[uuid] = { resolve, reject };
 
             this.sendMessage("nodeMobileSQLLite", {
+                uuid,
                 func: "getKnowledge",
                 params: [params],
             });
@@ -840,15 +706,11 @@ export class SqliteDatabaseAdapter implements IDatabaseCacheAdapter {
         searchText?: string;
     }): Promise<RAGKnowledgeItem[]> {
         return new Promise<any>((resolve, reject) => {
-            this.once("nodeMobileSQLLiteResp", (data) => {
-                resolve(data.result);
-            });
-
-            this.once("nodeMobileSQLLiteRespError", (data) => {
-                reject(new Error(data.message));
-            });
+            const uuid = uuidv4();
+            this.promises[uuid] = { resolve, reject };
 
             this.sendMessage("nodeMobileSQLLite", {
+                uuid,
                 func: "searchKnowledge",
                 params: [params],
             });
@@ -857,15 +719,11 @@ export class SqliteDatabaseAdapter implements IDatabaseCacheAdapter {
 
     async createKnowledge(knowledge: RAGKnowledgeItem): Promise<void> {
         return new Promise<any>((resolve, reject) => {
-            this.once("nodeMobileSQLLiteResp", (data) => {
-                resolve(data.result);
-            });
-
-            this.once("nodeMobileSQLLiteRespError", (data) => {
-                reject(new Error(data.message));
-            });
+            const uuid = uuidv4();
+            this.promises[uuid] = { resolve, reject };
 
             this.sendMessage("nodeMobileSQLLite", {
+                uuid,
                 func: "createKnowledge",
                 params: [knowledge],
             });
@@ -874,15 +732,11 @@ export class SqliteDatabaseAdapter implements IDatabaseCacheAdapter {
 
     async removeKnowledge(id: UUID): Promise<void> {
         return new Promise<any>((resolve, reject) => {
-            this.once("nodeMobileSQLLiteResp", (data) => {
-                resolve(data.result);
-            });
-
-            this.once("nodeMobileSQLLiteRespError", (data) => {
-                reject(new Error(data.message));
-            });
+            const uuid = uuidv4();
+            this.promises[uuid] = { resolve, reject };
 
             this.sendMessage("nodeMobileSQLLite", {
+                uuid,
                 func: "removeKnowledge",
                 params: [id],
             });
@@ -891,15 +745,11 @@ export class SqliteDatabaseAdapter implements IDatabaseCacheAdapter {
 
     async clearKnowledge(agentId: UUID, shared?: boolean): Promise<void> {
         return new Promise<any>((resolve, reject) => {
-            this.once("nodeMobileSQLLiteResp", (data) => {
-                resolve(data.result);
-            });
-
-            this.once("nodeMobileSQLLiteRespError", (data) => {
-                reject(new Error(data.message));
-            });
+            const uuid = uuidv4();
+            this.promises[uuid] = { resolve, reject };
 
             this.sendMessage("nodeMobileSQLLite", {
+                uuid,
                 func: "clearKnowledge",
                 params: [agentId, shared],
             });

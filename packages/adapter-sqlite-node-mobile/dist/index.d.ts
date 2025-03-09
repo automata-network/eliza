@@ -2,6 +2,7 @@ import { IDatabaseCacheAdapter, UUID, Participant, Account, Actor, Memory, GoalS
 
 declare class SqliteDatabaseAdapter implements IDatabaseCacheAdapter {
     private dbPath;
+    private promises;
     constructor(dbPath: string);
     private sendMessage;
     private once;

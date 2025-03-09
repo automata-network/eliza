@@ -1,8 +1,25 @@
 // src/index.ts
+import { v4 as uuidv4 } from "uuid";
 var SqliteDatabaseAdapter = class {
   dbPath;
+  promises;
   constructor(dbPath) {
     this.dbPath = dbPath;
+    this.on("nodeMobileSQLLiteResp", (data) => {
+      const { uuid, result } = data;
+      if (this.promises[uuid]) {
+        this.promises[uuid].resolve(result);
+        delete this.promises[uuid];
+      }
+    });
+    this.on("nodeMobileSQLLiteRespError", (data) => {
+      const { uuid, message } = data;
+      if (this.promises[uuid]) {
+        this.promises[uuid].reject(new Error(message));
+        delete this.promises[uuid];
+      }
+    });
+    this.promises = {};
   }
   sendMessage(type, data) {
     import("rn-bridge").then((rn_bridge) => {
@@ -26,13 +43,10 @@ var SqliteDatabaseAdapter = class {
   }
   async getRoom(roomId) {
     return new Promise((resolve, reject) => {
-      this.once("nodeMobileSQLLiteResp", (data) => {
-        resolve(data.result);
-      });
-      this.once("nodeMobileSQLLiteRespError", (data) => {
-        reject(new Error(data.message));
-      });
+      const uuid = uuidv4();
+      this.promises[uuid] = { resolve, reject };
       this.sendMessage("nodeMobileSQLLite", {
+        uuid,
         func: "getRoom",
         params: [roomId]
       });
@@ -40,13 +54,10 @@ var SqliteDatabaseAdapter = class {
   }
   async getParticipantsForAccount(userId) {
     return new Promise((resolve, reject) => {
-      this.once("nodeMobileSQLLiteResp", (data) => {
-        resolve(data.result);
-      });
-      this.once("nodeMobileSQLLiteRespError", (data) => {
-        reject(new Error(data.message));
-      });
+      const uuid = uuidv4();
+      this.promises[uuid] = { resolve, reject };
       this.sendMessage("nodeMobileSQLLite", {
+        uuid,
         func: "getParticipantsForAccount",
         params: [userId]
       });
@@ -54,13 +65,10 @@ var SqliteDatabaseAdapter = class {
   }
   async getParticipantsForRoom(roomId) {
     return new Promise((resolve, reject) => {
-      this.once("nodeMobileSQLLiteResp", (data) => {
-        resolve(data.result);
-      });
-      this.once("nodeMobileSQLLiteRespError", (data) => {
-        reject(new Error(data.message));
-      });
+      const uuid = uuidv4();
+      this.promises[uuid] = { resolve, reject };
       this.sendMessage("nodeMobileSQLLite", {
+        uuid,
         func: "getParticipantsForRoom",
         params: [roomId]
       });
@@ -68,13 +76,10 @@ var SqliteDatabaseAdapter = class {
   }
   async getParticipantUserState(roomId, userId) {
     return new Promise((resolve, reject) => {
-      this.once("nodeMobileSQLLiteResp", (data) => {
-        resolve(data.result);
-      });
-      this.once("nodeMobileSQLLiteRespError", (data) => {
-        reject(new Error(data.message));
-      });
+      const uuid = uuidv4();
+      this.promises[uuid] = { resolve, reject };
       this.sendMessage("nodeMobileSQLLite", {
+        uuid,
         func: "getParticipantUserState",
         params: [roomId, userId]
       });
@@ -82,13 +87,10 @@ var SqliteDatabaseAdapter = class {
   }
   async setParticipantUserState(roomId, userId, state) {
     return new Promise((resolve, reject) => {
-      this.once("nodeMobileSQLLiteResp", (data) => {
-        resolve(data.result);
-      });
-      this.once("nodeMobileSQLLiteRespError", (data) => {
-        reject(new Error(data.message));
-      });
+      const uuid = uuidv4();
+      this.promises[uuid] = { resolve, reject };
       this.sendMessage("nodeMobileSQLLite", {
+        uuid,
         func: "setParticipantUserState",
         params: [roomId, userId, state]
       });
@@ -96,13 +98,10 @@ var SqliteDatabaseAdapter = class {
   }
   async init() {
     return new Promise((resolve, reject) => {
-      this.once("nodeMobileSQLLiteResp", (data) => {
-        resolve(data.result);
-      });
-      this.once("nodeMobileSQLLiteRespError", (data) => {
-        reject(new Error(data.message));
-      });
+      const uuid = uuidv4();
+      this.promises[uuid] = { resolve, reject };
       this.sendMessage("nodeMobileSQLLite", {
+        uuid,
         func: "init",
         params: [this.dbPath]
       });
@@ -110,13 +109,10 @@ var SqliteDatabaseAdapter = class {
   }
   async close() {
     return new Promise((resolve, reject) => {
-      this.once("nodeMobileSQLLiteResp", (data) => {
-        resolve(data.result);
-      });
-      this.once("nodeMobileSQLLiteRespError", (data) => {
-        reject(new Error(data.message));
-      });
+      const uuid = uuidv4();
+      this.promises[uuid] = { resolve, reject };
       this.sendMessage("nodeMobileSQLLite", {
+        uuid,
         func: "close",
         params: []
       });
@@ -124,13 +120,10 @@ var SqliteDatabaseAdapter = class {
   }
   async getAccountById(userId) {
     return new Promise((resolve, reject) => {
-      this.once("nodeMobileSQLLiteResp", (data) => {
-        resolve(data.result);
-      });
-      this.once("nodeMobileSQLLiteRespError", (data) => {
-        reject(new Error(data.message));
-      });
+      const uuid = uuidv4();
+      this.promises[uuid] = { resolve, reject };
       this.sendMessage("nodeMobileSQLLite", {
+        uuid,
         func: "getAccountById",
         params: [userId]
       });
@@ -138,13 +131,10 @@ var SqliteDatabaseAdapter = class {
   }
   async createAccount(account) {
     return new Promise((resolve, reject) => {
-      this.once("nodeMobileSQLLiteResp", (data) => {
-        resolve(data.result);
-      });
-      this.once("nodeMobileSQLLiteRespError", (data) => {
-        reject(new Error(data.message));
-      });
+      const uuid = uuidv4();
+      this.promises[uuid] = { resolve, reject };
       this.sendMessage("nodeMobileSQLLite", {
+        uuid,
         func: "createAccount",
         params: [account]
       });
@@ -152,13 +142,10 @@ var SqliteDatabaseAdapter = class {
   }
   async getActorDetails(params) {
     return new Promise((resolve, reject) => {
-      this.once("nodeMobileSQLLiteResp", (data) => {
-        resolve(data.result);
-      });
-      this.once("nodeMobileSQLLiteRespError", (data) => {
-        reject(new Error(data.message));
-      });
+      const uuid = uuidv4();
+      this.promises[uuid] = { resolve, reject };
       this.sendMessage("nodeMobileSQLLite", {
+        uuid,
         func: "getActorDetails",
         params: [params]
       });
@@ -166,13 +153,10 @@ var SqliteDatabaseAdapter = class {
   }
   async getMemoriesByRoomIds(params) {
     return new Promise((resolve, reject) => {
-      this.once("nodeMobileSQLLiteResp", (data) => {
-        resolve(data.result);
-      });
-      this.once("nodeMobileSQLLiteRespError", (data) => {
-        reject(new Error(data.message));
-      });
+      const uuid = uuidv4();
+      this.promises[uuid] = { resolve, reject };
       this.sendMessage("nodeMobileSQLLite", {
+        uuid,
         func: "getMemoriesByRoomIds",
         params: [params]
       });
@@ -180,13 +164,10 @@ var SqliteDatabaseAdapter = class {
   }
   async getMemoryById(memoryId) {
     return new Promise((resolve, reject) => {
-      this.once("nodeMobileSQLLiteResp", (data) => {
-        resolve(data.result);
-      });
-      this.once("nodeMobileSQLLiteRespError", (data) => {
-        reject(new Error(data.message));
-      });
+      const uuid = uuidv4();
+      this.promises[uuid] = { resolve, reject };
       this.sendMessage("nodeMobileSQLLite", {
+        uuid,
         func: "getMemoryById",
         params: [memoryId]
       });
@@ -194,13 +175,10 @@ var SqliteDatabaseAdapter = class {
   }
   async getMemoriesByIds(memoryIds, tableName) {
     return new Promise((resolve, reject) => {
-      this.once("nodeMobileSQLLiteResp", (data) => {
-        resolve(data.result);
-      });
-      this.once("nodeMobileSQLLiteRespError", (data) => {
-        reject(new Error(data.message));
-      });
+      const uuid = uuidv4();
+      this.promises[uuid] = { resolve, reject };
       this.sendMessage("nodeMobileSQLLite", {
+        uuid,
         func: "getMemoriesByIds",
         params: [memoryIds, tableName]
       });
@@ -208,13 +186,10 @@ var SqliteDatabaseAdapter = class {
   }
   async createMemory(memory, tableName) {
     return new Promise((resolve, reject) => {
-      this.once("nodeMobileSQLLiteResp", (data) => {
-        resolve(data.result);
-      });
-      this.once("nodeMobileSQLLiteRespError", (data) => {
-        reject(new Error(data.message));
-      });
+      const uuid = uuidv4();
+      this.promises[uuid] = { resolve, reject };
       this.sendMessage("nodeMobileSQLLite", {
+        uuid,
         func: "createMemory",
         params: [memory, tableName]
       });
@@ -222,13 +197,10 @@ var SqliteDatabaseAdapter = class {
   }
   async searchMemories(params) {
     return new Promise((resolve, reject) => {
-      this.once("nodeMobileSQLLiteResp", (data) => {
-        resolve(data.result);
-      });
-      this.once("nodeMobileSQLLiteRespError", (data) => {
-        reject(new Error(data.message));
-      });
+      const uuid = uuidv4();
+      this.promises[uuid] = { resolve, reject };
       this.sendMessage("nodeMobileSQLLite", {
+        uuid,
         func: "searchMemories",
         params: [params]
       });
@@ -236,13 +208,10 @@ var SqliteDatabaseAdapter = class {
   }
   async searchMemoriesByEmbedding(embedding, params) {
     return new Promise((resolve, reject) => {
-      this.once("nodeMobileSQLLiteResp", (data) => {
-        resolve(data.result);
-      });
-      this.once("nodeMobileSQLLiteRespError", (data) => {
-        reject(new Error(data.message));
-      });
+      const uuid = uuidv4();
+      this.promises[uuid] = { resolve, reject };
       this.sendMessage("nodeMobileSQLLite", {
+        uuid,
         func: "searchMemoriesByEmbedding",
         params: [embedding, params]
       });
@@ -250,13 +219,10 @@ var SqliteDatabaseAdapter = class {
   }
   async getCachedEmbeddings(opts) {
     return new Promise((resolve, reject) => {
-      this.once("nodeMobileSQLLiteResp", (data) => {
-        resolve(data.result);
-      });
-      this.once("nodeMobileSQLLiteRespError", (data) => {
-        reject(new Error(data.message));
-      });
+      const uuid = uuidv4();
+      this.promises[uuid] = { resolve, reject };
       this.sendMessage("nodeMobileSQLLite", {
+        uuid,
         func: "getCachedEmbeddings",
         params: [opts]
       });
@@ -264,13 +230,10 @@ var SqliteDatabaseAdapter = class {
   }
   async updateGoalStatus(params) {
     return new Promise((resolve, reject) => {
-      this.once("nodeMobileSQLLiteResp", (data) => {
-        resolve(data.result);
-      });
-      this.once("nodeMobileSQLLiteRespError", (data) => {
-        reject(new Error(data.message));
-      });
+      const uuid = uuidv4();
+      this.promises[uuid] = { resolve, reject };
       this.sendMessage("nodeMobileSQLLite", {
+        uuid,
         func: "updateGoalStatus",
         params: [params]
       });
@@ -278,13 +241,10 @@ var SqliteDatabaseAdapter = class {
   }
   async log(params) {
     return new Promise((resolve, reject) => {
-      this.once("nodeMobileSQLLiteResp", (data) => {
-        resolve(data.result);
-      });
-      this.once("nodeMobileSQLLiteRespError", (data) => {
-        reject(new Error(data.message));
-      });
+      const uuid = uuidv4();
+      this.promises[uuid] = { resolve, reject };
       this.sendMessage("nodeMobileSQLLite", {
+        uuid,
         func: "log",
         params: [params]
       });
@@ -292,13 +252,10 @@ var SqliteDatabaseAdapter = class {
   }
   async getMemories(params) {
     return new Promise((resolve, reject) => {
-      this.once("nodeMobileSQLLiteResp", (data) => {
-        resolve(data.result);
-      });
-      this.once("nodeMobileSQLLiteRespError", (data) => {
-        reject(new Error(data.message));
-      });
+      const uuid = uuidv4();
+      this.promises[uuid] = { resolve, reject };
       this.sendMessage("nodeMobileSQLLite", {
+        uuid,
         func: "getMemories",
         params: [params]
       });
@@ -306,13 +263,10 @@ var SqliteDatabaseAdapter = class {
   }
   async removeMemory(memoryId, tableName) {
     return new Promise((resolve, reject) => {
-      this.once("nodeMobileSQLLiteResp", (data) => {
-        resolve(data.result);
-      });
-      this.once("nodeMobileSQLLiteRespError", (data) => {
-        reject(new Error(data.message));
-      });
+      const uuid = uuidv4();
+      this.promises[uuid] = { resolve, reject };
       this.sendMessage("nodeMobileSQLLite", {
+        uuid,
         func: "removeMemory",
         params: [memoryId, tableName]
       });
@@ -320,13 +274,10 @@ var SqliteDatabaseAdapter = class {
   }
   async removeAllMemories(roomId, tableName) {
     return new Promise((resolve, reject) => {
-      this.once("nodeMobileSQLLiteResp", (data) => {
-        resolve(data.result);
-      });
-      this.once("nodeMobileSQLLiteRespError", (data) => {
-        reject(new Error(data.message));
-      });
+      const uuid = uuidv4();
+      this.promises[uuid] = { resolve, reject };
       this.sendMessage("nodeMobileSQLLite", {
+        uuid,
         func: "removeAllMemories",
         params: [roomId, tableName]
       });
@@ -334,13 +285,10 @@ var SqliteDatabaseAdapter = class {
   }
   async countMemories(roomId, unique = true, tableName = "") {
     return new Promise((resolve, reject) => {
-      this.once("nodeMobileSQLLiteResp", (data) => {
-        resolve(data.result);
-      });
-      this.once("nodeMobileSQLLiteRespError", (data) => {
-        reject(new Error(data.message));
-      });
+      const uuid = uuidv4();
+      this.promises[uuid] = { resolve, reject };
       this.sendMessage("nodeMobileSQLLite", {
+        uuid,
         func: "countMemories",
         params: [roomId, unique, tableName]
       });
@@ -348,13 +296,10 @@ var SqliteDatabaseAdapter = class {
   }
   async getGoals(params) {
     return new Promise((resolve, reject) => {
-      this.once("nodeMobileSQLLiteResp", (data) => {
-        resolve(data.result);
-      });
-      this.once("nodeMobileSQLLiteRespError", (data) => {
-        reject(new Error(data.message));
-      });
+      const uuid = uuidv4();
+      this.promises[uuid] = { resolve, reject };
       this.sendMessage("nodeMobileSQLLite", {
+        uuid,
         func: "getGoals",
         params: [params]
       });
@@ -362,13 +307,10 @@ var SqliteDatabaseAdapter = class {
   }
   async updateGoal(goal) {
     return new Promise((resolve, reject) => {
-      this.once("nodeMobileSQLLiteResp", (data) => {
-        resolve(data.result);
-      });
-      this.once("nodeMobileSQLLiteRespError", (data) => {
-        reject(new Error(data.message));
-      });
+      const uuid = uuidv4();
+      this.promises[uuid] = { resolve, reject };
       this.sendMessage("nodeMobileSQLLite", {
+        uuid,
         func: "updateGoal",
         params: [goal]
       });
@@ -376,13 +318,10 @@ var SqliteDatabaseAdapter = class {
   }
   async removeGoal(goalId) {
     return new Promise((resolve, reject) => {
-      this.once("nodeMobileSQLLiteResp", (data) => {
-        resolve(data.result);
-      });
-      this.once("nodeMobileSQLLiteRespError", (data) => {
-        reject(new Error(data.message));
-      });
+      const uuid = uuidv4();
+      this.promises[uuid] = { resolve, reject };
       this.sendMessage("nodeMobileSQLLite", {
+        uuid,
         func: "removeGoal",
         params: [goalId]
       });
@@ -390,13 +329,10 @@ var SqliteDatabaseAdapter = class {
   }
   async removeAllGoals(roomId) {
     return new Promise((resolve, reject) => {
-      this.once("nodeMobileSQLLiteResp", (data) => {
-        resolve(data.result);
-      });
-      this.once("nodeMobileSQLLiteRespError", (data) => {
-        reject(new Error(data.message));
-      });
+      const uuid = uuidv4();
+      this.promises[uuid] = { resolve, reject };
       this.sendMessage("nodeMobileSQLLite", {
+        uuid,
         func: "removeAllGoals",
         params: [roomId]
       });
@@ -404,13 +340,10 @@ var SqliteDatabaseAdapter = class {
   }
   async createRoom(roomId) {
     return new Promise((resolve, reject) => {
-      this.once("nodeMobileSQLLiteResp", (data) => {
-        resolve(data.result);
-      });
-      this.once("nodeMobileSQLLiteRespError", (data) => {
-        reject(new Error(data.message));
-      });
+      const uuid = uuidv4();
+      this.promises[uuid] = { resolve, reject };
       this.sendMessage("nodeMobileSQLLite", {
+        uuid,
         func: "createRoom",
         params: [roomId]
       });
@@ -418,13 +351,10 @@ var SqliteDatabaseAdapter = class {
   }
   async removeRoom(roomId) {
     return new Promise((resolve, reject) => {
-      this.once("nodeMobileSQLLiteResp", (data) => {
-        resolve(data.result);
-      });
-      this.once("nodeMobileSQLLiteRespError", (data) => {
-        reject(new Error(data.message));
-      });
+      const uuid = uuidv4();
+      this.promises[uuid] = { resolve, reject };
       this.sendMessage("nodeMobileSQLLite", {
+        uuid,
         func: "removeRoom",
         params: [roomId]
       });
@@ -432,13 +362,10 @@ var SqliteDatabaseAdapter = class {
   }
   async getRoomsForParticipant(userId) {
     return new Promise((resolve, reject) => {
-      this.once("nodeMobileSQLLiteResp", (data) => {
-        resolve(data.result);
-      });
-      this.once("nodeMobileSQLLiteRespError", (data) => {
-        reject(new Error(data.message));
-      });
+      const uuid = uuidv4();
+      this.promises[uuid] = { resolve, reject };
       this.sendMessage("nodeMobileSQLLite", {
+        uuid,
         func: "getRoomsForParticipant",
         params: [userId]
       });
@@ -446,13 +373,10 @@ var SqliteDatabaseAdapter = class {
   }
   async getRoomsForParticipants(userIds) {
     return new Promise((resolve, reject) => {
-      this.once("nodeMobileSQLLiteResp", (data) => {
-        resolve(data.result);
-      });
-      this.once("nodeMobileSQLLiteRespError", (data) => {
-        reject(new Error(data.message));
-      });
+      const uuid = uuidv4();
+      this.promises[uuid] = { resolve, reject };
       this.sendMessage("nodeMobileSQLLite", {
+        uuid,
         func: "getRoomsForParticipants",
         params: [userIds]
       });
@@ -460,13 +384,10 @@ var SqliteDatabaseAdapter = class {
   }
   async addParticipant(userId, roomId) {
     return new Promise((resolve, reject) => {
-      this.once("nodeMobileSQLLiteResp", (data) => {
-        resolve(data.result);
-      });
-      this.once("nodeMobileSQLLiteRespError", (data) => {
-        reject(new Error(data.message));
-      });
+      const uuid = uuidv4();
+      this.promises[uuid] = { resolve, reject };
       this.sendMessage("nodeMobileSQLLite", {
+        uuid,
         func: "addParticipant",
         params: [userId, roomId]
       });
@@ -474,13 +395,10 @@ var SqliteDatabaseAdapter = class {
   }
   async removeParticipant(userId, roomId) {
     return new Promise((resolve, reject) => {
-      this.once("nodeMobileSQLLiteResp", (data) => {
-        resolve(data.result);
-      });
-      this.once("nodeMobileSQLLiteRespError", (data) => {
-        reject(new Error(data.message));
-      });
+      const uuid = uuidv4();
+      this.promises[uuid] = { resolve, reject };
       this.sendMessage("nodeMobileSQLLite", {
+        uuid,
         func: "removeParticipant",
         params: [userId, roomId]
       });
@@ -488,13 +406,10 @@ var SqliteDatabaseAdapter = class {
   }
   async createRelationship(params) {
     return new Promise((resolve, reject) => {
-      this.once("nodeMobileSQLLiteResp", (data) => {
-        resolve(data.result);
-      });
-      this.once("nodeMobileSQLLiteRespError", (data) => {
-        reject(new Error(data.message));
-      });
+      const uuid = uuidv4();
+      this.promises[uuid] = { resolve, reject };
       this.sendMessage("nodeMobileSQLLite", {
+        uuid,
         func: "createRelationship",
         params: [params]
       });
@@ -502,13 +417,10 @@ var SqliteDatabaseAdapter = class {
   }
   async getRelationship(params) {
     return new Promise((resolve, reject) => {
-      this.once("nodeMobileSQLLiteResp", (data) => {
-        resolve(data.result);
-      });
-      this.once("nodeMobileSQLLiteRespError", (data) => {
-        reject(new Error(data.message));
-      });
+      const uuid = uuidv4();
+      this.promises[uuid] = { resolve, reject };
       this.sendMessage("nodeMobileSQLLite", {
+        uuid,
         func: "getRelationship",
         params: [params]
       });
@@ -516,13 +428,10 @@ var SqliteDatabaseAdapter = class {
   }
   async getRelationships(params) {
     return new Promise((resolve, reject) => {
-      this.once("nodeMobileSQLLiteResp", (data) => {
-        resolve(data.result);
-      });
-      this.once("nodeMobileSQLLiteRespError", (data) => {
-        reject(new Error(data.message));
-      });
+      const uuid = uuidv4();
+      this.promises[uuid] = { resolve, reject };
       this.sendMessage("nodeMobileSQLLite", {
+        uuid,
         func: "getRelationships",
         params: [params]
       });
@@ -530,13 +439,10 @@ var SqliteDatabaseAdapter = class {
   }
   async getCache(params) {
     return new Promise((resolve, reject) => {
-      this.once("nodeMobileSQLLiteResp", (data) => {
-        resolve(data.result);
-      });
-      this.once("nodeMobileSQLLiteRespError", (data) => {
-        reject(new Error(data.message));
-      });
+      const uuid = uuidv4();
+      this.promises[uuid] = { resolve, reject };
       this.sendMessage("nodeMobileSQLLite", {
+        uuid,
         func: "getCache",
         params: [params]
       });
@@ -544,13 +450,10 @@ var SqliteDatabaseAdapter = class {
   }
   async setCache(params) {
     return new Promise((resolve, reject) => {
-      this.once("nodeMobileSQLLiteResp", (data) => {
-        resolve(data.result);
-      });
-      this.once("nodeMobileSQLLiteRespError", (data) => {
-        reject(new Error(data.message));
-      });
+      const uuid = uuidv4();
+      this.promises[uuid] = { resolve, reject };
       this.sendMessage("nodeMobileSQLLite", {
+        uuid,
         func: "setCache",
         params: [params]
       });
@@ -558,13 +461,10 @@ var SqliteDatabaseAdapter = class {
   }
   async deleteCache(params) {
     return new Promise((resolve, reject) => {
-      this.once("nodeMobileSQLLiteResp", (data) => {
-        resolve(data.result);
-      });
-      this.once("nodeMobileSQLLiteRespError", (data) => {
-        reject(new Error(data.message));
-      });
+      const uuid = uuidv4();
+      this.promises[uuid] = { resolve, reject };
       this.sendMessage("nodeMobileSQLLite", {
+        uuid,
         func: "deleteCache",
         params: [params]
       });
@@ -572,13 +472,10 @@ var SqliteDatabaseAdapter = class {
   }
   async getKnowledge(params) {
     return new Promise((resolve, reject) => {
-      this.once("nodeMobileSQLLiteResp", (data) => {
-        resolve(data.result);
-      });
-      this.once("nodeMobileSQLLiteRespError", (data) => {
-        reject(new Error(data.message));
-      });
+      const uuid = uuidv4();
+      this.promises[uuid] = { resolve, reject };
       this.sendMessage("nodeMobileSQLLite", {
+        uuid,
         func: "getKnowledge",
         params: [params]
       });
@@ -586,13 +483,10 @@ var SqliteDatabaseAdapter = class {
   }
   async searchKnowledge(params) {
     return new Promise((resolve, reject) => {
-      this.once("nodeMobileSQLLiteResp", (data) => {
-        resolve(data.result);
-      });
-      this.once("nodeMobileSQLLiteRespError", (data) => {
-        reject(new Error(data.message));
-      });
+      const uuid = uuidv4();
+      this.promises[uuid] = { resolve, reject };
       this.sendMessage("nodeMobileSQLLite", {
+        uuid,
         func: "searchKnowledge",
         params: [params]
       });
@@ -600,13 +494,10 @@ var SqliteDatabaseAdapter = class {
   }
   async createKnowledge(knowledge) {
     return new Promise((resolve, reject) => {
-      this.once("nodeMobileSQLLiteResp", (data) => {
-        resolve(data.result);
-      });
-      this.once("nodeMobileSQLLiteRespError", (data) => {
-        reject(new Error(data.message));
-      });
+      const uuid = uuidv4();
+      this.promises[uuid] = { resolve, reject };
       this.sendMessage("nodeMobileSQLLite", {
+        uuid,
         func: "createKnowledge",
         params: [knowledge]
       });
@@ -614,13 +505,10 @@ var SqliteDatabaseAdapter = class {
   }
   async removeKnowledge(id) {
     return new Promise((resolve, reject) => {
-      this.once("nodeMobileSQLLiteResp", (data) => {
-        resolve(data.result);
-      });
-      this.once("nodeMobileSQLLiteRespError", (data) => {
-        reject(new Error(data.message));
-      });
+      const uuid = uuidv4();
+      this.promises[uuid] = { resolve, reject };
       this.sendMessage("nodeMobileSQLLite", {
+        uuid,
         func: "removeKnowledge",
         params: [id]
       });
@@ -628,13 +516,10 @@ var SqliteDatabaseAdapter = class {
   }
   async clearKnowledge(agentId, shared) {
     return new Promise((resolve, reject) => {
-      this.once("nodeMobileSQLLiteResp", (data) => {
-        resolve(data.result);
-      });
-      this.once("nodeMobileSQLLiteRespError", (data) => {
-        reject(new Error(data.message));
-      });
+      const uuid = uuidv4();
+      this.promises[uuid] = { resolve, reject };
       this.sendMessage("nodeMobileSQLLite", {
+        uuid,
         func: "clearKnowledge",
         params: [agentId, shared]
       });
