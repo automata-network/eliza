@@ -8,7 +8,7 @@
     "clean": "./scripts/clean.sh"
   },
   "dependencies": {
-    "@elizaos/adapter-sqlite-node-mobile": "file:../../../eliza/packages/adapter-sqlite-node-mobile",
+    "@elizaos/adapter-sqlite-node-mobile": "https://gitpkg.vercel.app/automata-network/eliza/packages/adapter-sqlite-node-mobile?node-mobile",
     "@elizaos/client-direct": "https://gitpkg.vercel.app/automata-network/eliza/packages/client-direct?node-mobile",
     "@elizaos/client-node-mobile": "https://gitpkg.vercel.app/automata-network/eliza/packages/client-node-mobile?node-mobile",
     "@elizaos/core": "https://gitpkg.vercel.app/automata-network/eliza/packages/core?node-mobile",
@@ -19,7 +19,7 @@
     "fs": "0.0.1-security",
     "node-fetch": "^3.3.2",
     "path": "0.12.7",
-    "rn-bridge": "file:missing_modules/rn-bridge"
+    "rn-bridge": "https://gitpkg.vercel.app/automata-network/eliza/packages/rn-bridge?node-mobile"
   },
   "engines": {
     "node": ">=22"
