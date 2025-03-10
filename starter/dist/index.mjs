@@ -909,7 +909,7 @@ var startAgents = async (modelHash) => {
   elizaLogger2.debug("starting agents");
   client = new NodeMobileClient();
   try {
-    agent = await startAgent(characterEliza, client, modelHash);
+    agent = await startAgent(characterTrump, client, modelHash);
     elizaLogger2.debug("agent started");
     sendMessage("nodeMobileAgentStarted", void 0);
   } catch (error) {

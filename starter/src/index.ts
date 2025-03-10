@@ -15,7 +15,7 @@ import { bootstrapPlugin } from "@elizaos/plugin-bootstrap";
 // import { createNodePlugin } from "@elizaos/plugin-node";
 // import { solanaPlugin } from "@elizaos/plugin-solana";
 import { initializeDbCache } from "./cache/index.ts";
-import { characterEliza } from "./character.ts";
+import { characterEliza, characterTrump } from "./character.ts";
 import { initializeClients } from "./clients/index.ts";
 import { getTokenForProvider } from "./config/index.ts";
 import { initializeDatabase } from "./database/index.ts";
@@ -176,7 +176,7 @@ const startAgents = async (modelHash: string) => {
     client = new NodeMobileClient();
 
     try {
-        agent = await startAgent(characterEliza, client, modelHash);
+        agent = await startAgent(characterTrump, client, modelHash);
 
         elizaLogger.debug("agent started");
 
