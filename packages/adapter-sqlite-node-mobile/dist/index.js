@@ -5,14 +5,14 @@ var SqliteDatabaseAdapter = class {
   promises;
   constructor(dbPath) {
     this.dbPath = dbPath;
-    this.on("nodeMobileSQLLiteResp", (data) => {
+    this.on("nodeMobileSQLiteResp", (data) => {
       const { uuid, result } = data;
       if (this.promises[uuid]) {
         this.promises[uuid].resolve(result);
         delete this.promises[uuid];
       }
     });
-    this.on("nodeMobileSQLLiteRespError", (data) => {
+    this.on("nodeMobileSQLiteRespError", (data) => {
       const { uuid, message } = data;
       if (this.promises[uuid]) {
         this.promises[uuid].reject(new Error(message));
@@ -45,7 +45,7 @@ var SqliteDatabaseAdapter = class {
     return new Promise((resolve, reject) => {
       const uuid = uuidv4();
       this.promises[uuid] = { resolve, reject };
-      this.sendMessage("nodeMobileSQLLite", {
+      this.sendMessage("nodeMobileSQLite", {
         uuid,
         func: "getRoom",
         params: [roomId]
@@ -56,7 +56,7 @@ var SqliteDatabaseAdapter = class {
     return new Promise((resolve, reject) => {
       const uuid = uuidv4();
       this.promises[uuid] = { resolve, reject };
-      this.sendMessage("nodeMobileSQLLite", {
+      this.sendMessage("nodeMobileSQLite", {
         uuid,
         func: "getParticipantsForAccount",
         params: [userId]
@@ -67,7 +67,7 @@ var SqliteDatabaseAdapter = class {
     return new Promise((resolve, reject) => {
       const uuid = uuidv4();
       this.promises[uuid] = { resolve, reject };
-      this.sendMessage("nodeMobileSQLLite", {
+      this.sendMessage("nodeMobileSQLite", {
         uuid,
         func: "getParticipantsForRoom",
         params: [roomId]
@@ -78,7 +78,7 @@ var SqliteDatabaseAdapter = class {
     return new Promise((resolve, reject) => {
       const uuid = uuidv4();
       this.promises[uuid] = { resolve, reject };
-      this.sendMessage("nodeMobileSQLLite", {
+      this.sendMessage("nodeMobileSQLite", {
         uuid,
         func: "getParticipantUserState",
         params: [roomId, userId]
@@ -89,7 +89,7 @@ var SqliteDatabaseAdapter = class {
     return new Promise((resolve, reject) => {
       const uuid = uuidv4();
       this.promises[uuid] = { resolve, reject };
-      this.sendMessage("nodeMobileSQLLite", {
+      this.sendMessage("nodeMobileSQLite", {
         uuid,
         func: "setParticipantUserState",
         params: [roomId, userId, state]
@@ -100,7 +100,7 @@ var SqliteDatabaseAdapter = class {
     return new Promise((resolve, reject) => {
       const uuid = uuidv4();
       this.promises[uuid] = { resolve, reject };
-      this.sendMessage("nodeMobileSQLLite", {
+      this.sendMessage("nodeMobileSQLite", {
         uuid,
         func: "init",
         params: [this.dbPath]
@@ -111,7 +111,7 @@ var SqliteDatabaseAdapter = class {
     return new Promise((resolve, reject) => {
       const uuid = uuidv4();
       this.promises[uuid] = { resolve, reject };
-      this.sendMessage("nodeMobileSQLLite", {
+      this.sendMessage("nodeMobileSQLite", {
         uuid,
         func: "close",
         params: []
@@ -122,7 +122,7 @@ var SqliteDatabaseAdapter = class {
     return new Promise((resolve, reject) => {
       const uuid = uuidv4();
       this.promises[uuid] = { resolve, reject };
-      this.sendMessage("nodeMobileSQLLite", {
+      this.sendMessage("nodeMobileSQLite", {
         uuid,
         func: "getAccountById",
         params: [userId]
@@ -133,7 +133,7 @@ var SqliteDatabaseAdapter = class {
     return new Promise((resolve, reject) => {
       const uuid = uuidv4();
       this.promises[uuid] = { resolve, reject };
-      this.sendMessage("nodeMobileSQLLite", {
+      this.sendMessage("nodeMobileSQLite", {
         uuid,
         func: "createAccount",
         params: [account]
@@ -144,7 +144,7 @@ var SqliteDatabaseAdapter = class {
     return new Promise((resolve, reject) => {
       const uuid = uuidv4();
       this.promises[uuid] = { resolve, reject };
-      this.sendMessage("nodeMobileSQLLite", {
+      this.sendMessage("nodeMobileSQLite", {
         uuid,
         func: "getActorDetails",
         params: [params]
@@ -155,7 +155,7 @@ var SqliteDatabaseAdapter = class {
     return new Promise((resolve, reject) => {
       const uuid = uuidv4();
       this.promises[uuid] = { resolve, reject };
-      this.sendMessage("nodeMobileSQLLite", {
+      this.sendMessage("nodeMobileSQLite", {
         uuid,
         func: "getMemoriesByRoomIds",
         params: [params]
@@ -166,7 +166,7 @@ var SqliteDatabaseAdapter = class {
     return new Promise((resolve, reject) => {
       const uuid = uuidv4();
       this.promises[uuid] = { resolve, reject };
-      this.sendMessage("nodeMobileSQLLite", {
+      this.sendMessage("nodeMobileSQLite", {
         uuid,
         func: "getMemoryById",
         params: [memoryId]
@@ -177,7 +177,7 @@ var SqliteDatabaseAdapter = class {
     return new Promise((resolve, reject) => {
       const uuid = uuidv4();
       this.promises[uuid] = { resolve, reject };
-      this.sendMessage("nodeMobileSQLLite", {
+      this.sendMessage("nodeMobileSQLite", {
         uuid,
         func: "getMemoriesByIds",
         params: [memoryIds, tableName]
@@ -188,7 +188,7 @@ var SqliteDatabaseAdapter = class {
     return new Promise((resolve, reject) => {
       const uuid = uuidv4();
       this.promises[uuid] = { resolve, reject };
-      this.sendMessage("nodeMobileSQLLite", {
+      this.sendMessage("nodeMobileSQLite", {
         uuid,
         func: "createMemory",
         params: [memory, tableName]
@@ -199,7 +199,7 @@ var SqliteDatabaseAdapter = class {
     return new Promise((resolve, reject) => {
       const uuid = uuidv4();
       this.promises[uuid] = { resolve, reject };
-      this.sendMessage("nodeMobileSQLLite", {
+      this.sendMessage("nodeMobileSQLite", {
         uuid,
         func: "searchMemories",
         params: [params]
@@ -210,7 +210,7 @@ var SqliteDatabaseAdapter = class {
     return new Promise((resolve, reject) => {
       const uuid = uuidv4();
       this.promises[uuid] = { resolve, reject };
-      this.sendMessage("nodeMobileSQLLite", {
+      this.sendMessage("nodeMobileSQLite", {
         uuid,
         func: "searchMemoriesByEmbedding",
         params: [embedding, params]
@@ -221,7 +221,7 @@ var SqliteDatabaseAdapter = class {
     return new Promise((resolve, reject) => {
       const uuid = uuidv4();
       this.promises[uuid] = { resolve, reject };
-      this.sendMessage("nodeMobileSQLLite", {
+      this.sendMessage("nodeMobileSQLite", {
         uuid,
         func: "getCachedEmbeddings",
         params: [opts]
@@ -232,7 +232,7 @@ var SqliteDatabaseAdapter = class {
     return new Promise((resolve, reject) => {
       const uuid = uuidv4();
       this.promises[uuid] = { resolve, reject };
-      this.sendMessage("nodeMobileSQLLite", {
+      this.sendMessage("nodeMobileSQLite", {
         uuid,
         func: "updateGoalStatus",
         params: [params]
@@ -243,7 +243,7 @@ var SqliteDatabaseAdapter = class {
     return new Promise((resolve, reject) => {
       const uuid = uuidv4();
       this.promises[uuid] = { resolve, reject };
-      this.sendMessage("nodeMobileSQLLite", {
+      this.sendMessage("nodeMobileSQLite", {
         uuid,
         func: "log",
         params: [params]
@@ -254,7 +254,7 @@ var SqliteDatabaseAdapter = class {
     return new Promise((resolve, reject) => {
       const uuid = uuidv4();
       this.promises[uuid] = { resolve, reject };
-      this.sendMessage("nodeMobileSQLLite", {
+      this.sendMessage("nodeMobileSQLite", {
         uuid,
         func: "getMemories",
         params: [params]
@@ -265,7 +265,7 @@ var SqliteDatabaseAdapter = class {
     return new Promise((resolve, reject) => {
       const uuid = uuidv4();
       this.promises[uuid] = { resolve, reject };
-      this.sendMessage("nodeMobileSQLLite", {
+      this.sendMessage("nodeMobileSQLite", {
         uuid,
         func: "removeMemory",
         params: [memoryId, tableName]
@@ -276,7 +276,7 @@ var SqliteDatabaseAdapter = class {
     return new Promise((resolve, reject) => {
       const uuid = uuidv4();
       this.promises[uuid] = { resolve, reject };
-      this.sendMessage("nodeMobileSQLLite", {
+      this.sendMessage("nodeMobileSQLite", {
         uuid,
         func: "removeAllMemories",
         params: [roomId, tableName]
@@ -287,7 +287,7 @@ var SqliteDatabaseAdapter = class {
     return new Promise((resolve, reject) => {
       const uuid = uuidv4();
       this.promises[uuid] = { resolve, reject };
-      this.sendMessage("nodeMobileSQLLite", {
+      this.sendMessage("nodeMobileSQLite", {
         uuid,
         func: "countMemories",
         params: [roomId, unique, tableName]
@@ -298,7 +298,7 @@ var SqliteDatabaseAdapter = class {
     return new Promise((resolve, reject) => {
       const uuid = uuidv4();
       this.promises[uuid] = { resolve, reject };
-      this.sendMessage("nodeMobileSQLLite", {
+      this.sendMessage("nodeMobileSQLite", {
         uuid,
         func: "getGoals",
         params: [params]
@@ -309,7 +309,7 @@ var SqliteDatabaseAdapter = class {
     return new Promise((resolve, reject) => {
       const uuid = uuidv4();
       this.promises[uuid] = { resolve, reject };
-      this.sendMessage("nodeMobileSQLLite", {
+      this.sendMessage("nodeMobileSQLite", {
         uuid,
         func: "updateGoal",
         params: [goal]
@@ -320,7 +320,7 @@ var SqliteDatabaseAdapter = class {
     return new Promise((resolve, reject) => {
       const uuid = uuidv4();
       this.promises[uuid] = { resolve, reject };
-      this.sendMessage("nodeMobileSQLLite", {
+      this.sendMessage("nodeMobileSQLite", {
         uuid,
         func: "removeGoal",
         params: [goalId]
@@ -331,7 +331,7 @@ var SqliteDatabaseAdapter = class {
     return new Promise((resolve, reject) => {
       const uuid = uuidv4();
       this.promises[uuid] = { resolve, reject };
-      this.sendMessage("nodeMobileSQLLite", {
+      this.sendMessage("nodeMobileSQLite", {
         uuid,
         func: "removeAllGoals",
         params: [roomId]
@@ -342,7 +342,7 @@ var SqliteDatabaseAdapter = class {
     return new Promise((resolve, reject) => {
       const uuid = uuidv4();
       this.promises[uuid] = { resolve, reject };
-      this.sendMessage("nodeMobileSQLLite", {
+      this.sendMessage("nodeMobileSQLite", {
         uuid,
         func: "createRoom",
         params: [roomId]
@@ -353,7 +353,7 @@ var SqliteDatabaseAdapter = class {
     return new Promise((resolve, reject) => {
       const uuid = uuidv4();
       this.promises[uuid] = { resolve, reject };
-      this.sendMessage("nodeMobileSQLLite", {
+      this.sendMessage("nodeMobileSQLite", {
         uuid,
         func: "removeRoom",
         params: [roomId]
@@ -364,7 +364,7 @@ var SqliteDatabaseAdapter = class {
     return new Promise((resolve, reject) => {
       const uuid = uuidv4();
       this.promises[uuid] = { resolve, reject };
-      this.sendMessage("nodeMobileSQLLite", {
+      this.sendMessage("nodeMobileSQLite", {
         uuid,
         func: "getRoomsForParticipant",
         params: [userId]
@@ -375,7 +375,7 @@ var SqliteDatabaseAdapter = class {
     return new Promise((resolve, reject) => {
       const uuid = uuidv4();
       this.promises[uuid] = { resolve, reject };
-      this.sendMessage("nodeMobileSQLLite", {
+      this.sendMessage("nodeMobileSQLite", {
         uuid,
         func: "getRoomsForParticipants",
         params: [userIds]
@@ -386,7 +386,7 @@ var SqliteDatabaseAdapter = class {
     return new Promise((resolve, reject) => {
       const uuid = uuidv4();
       this.promises[uuid] = { resolve, reject };
-      this.sendMessage("nodeMobileSQLLite", {
+      this.sendMessage("nodeMobileSQLite", {
         uuid,
         func: "addParticipant",
         params: [userId, roomId]
@@ -397,7 +397,7 @@ var SqliteDatabaseAdapter = class {
     return new Promise((resolve, reject) => {
       const uuid = uuidv4();
       this.promises[uuid] = { resolve, reject };
-      this.sendMessage("nodeMobileSQLLite", {
+      this.sendMessage("nodeMobileSQLite", {
         uuid,
         func: "removeParticipant",
         params: [userId, roomId]
@@ -408,7 +408,7 @@ var SqliteDatabaseAdapter = class {
     return new Promise((resolve, reject) => {
       const uuid = uuidv4();
       this.promises[uuid] = { resolve, reject };
-      this.sendMessage("nodeMobileSQLLite", {
+      this.sendMessage("nodeMobileSQLite", {
         uuid,
         func: "createRelationship",
         params: [params]
@@ -419,7 +419,7 @@ var SqliteDatabaseAdapter = class {
     return new Promise((resolve, reject) => {
       const uuid = uuidv4();
       this.promises[uuid] = { resolve, reject };
-      this.sendMessage("nodeMobileSQLLite", {
+      this.sendMessage("nodeMobileSQLite", {
         uuid,
         func: "getRelationship",
         params: [params]
@@ -430,7 +430,7 @@ var SqliteDatabaseAdapter = class {
     return new Promise((resolve, reject) => {
       const uuid = uuidv4();
       this.promises[uuid] = { resolve, reject };
-      this.sendMessage("nodeMobileSQLLite", {
+      this.sendMessage("nodeMobileSQLite", {
         uuid,
         func: "getRelationships",
         params: [params]
@@ -441,7 +441,7 @@ var SqliteDatabaseAdapter = class {
     return new Promise((resolve, reject) => {
       const uuid = uuidv4();
       this.promises[uuid] = { resolve, reject };
-      this.sendMessage("nodeMobileSQLLite", {
+      this.sendMessage("nodeMobileSQLite", {
         uuid,
         func: "getCache",
         params: [params]
@@ -452,7 +452,7 @@ var SqliteDatabaseAdapter = class {
     return new Promise((resolve, reject) => {
       const uuid = uuidv4();
       this.promises[uuid] = { resolve, reject };
-      this.sendMessage("nodeMobileSQLLite", {
+      this.sendMessage("nodeMobileSQLite", {
         uuid,
         func: "setCache",
         params: [params]
@@ -463,7 +463,7 @@ var SqliteDatabaseAdapter = class {
     return new Promise((resolve, reject) => {
       const uuid = uuidv4();
       this.promises[uuid] = { resolve, reject };
-      this.sendMessage("nodeMobileSQLLite", {
+      this.sendMessage("nodeMobileSQLite", {
         uuid,
         func: "deleteCache",
         params: [params]
@@ -474,7 +474,7 @@ var SqliteDatabaseAdapter = class {
     return new Promise((resolve, reject) => {
       const uuid = uuidv4();
       this.promises[uuid] = { resolve, reject };
-      this.sendMessage("nodeMobileSQLLite", {
+      this.sendMessage("nodeMobileSQLite", {
         uuid,
         func: "getKnowledge",
         params: [params]
@@ -485,7 +485,7 @@ var SqliteDatabaseAdapter = class {
     return new Promise((resolve, reject) => {
       const uuid = uuidv4();
       this.promises[uuid] = { resolve, reject };
-      this.sendMessage("nodeMobileSQLLite", {
+      this.sendMessage("nodeMobileSQLite", {
         uuid,
         func: "searchKnowledge",
         params: [params]
@@ -496,7 +496,7 @@ var SqliteDatabaseAdapter = class {
     return new Promise((resolve, reject) => {
       const uuid = uuidv4();
       this.promises[uuid] = { resolve, reject };
-      this.sendMessage("nodeMobileSQLLite", {
+      this.sendMessage("nodeMobileSQLite", {
         uuid,
         func: "createKnowledge",
         params: [knowledge]
@@ -507,7 +507,7 @@ var SqliteDatabaseAdapter = class {
     return new Promise((resolve, reject) => {
       const uuid = uuidv4();
       this.promises[uuid] = { resolve, reject };
-      this.sendMessage("nodeMobileSQLLite", {
+      this.sendMessage("nodeMobileSQLite", {
         uuid,
         func: "removeKnowledge",
         params: [id]
@@ -518,7 +518,7 @@ var SqliteDatabaseAdapter = class {
     return new Promise((resolve, reject) => {
       const uuid = uuidv4();
       this.promises[uuid] = { resolve, reject };
-      this.sendMessage("nodeMobileSQLLite", {
+      this.sendMessage("nodeMobileSQLite", {
         uuid,
         func: "clearKnowledge",
         params: [agentId, shared]
