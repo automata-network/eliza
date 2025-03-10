@@ -814,17 +814,14 @@ function getTokenForProvider(provider, character) {
 // src/database/index.ts
 import { SqliteDatabaseAdapter } from "@elizaos/adapter-sqlite-node-mobile";
 import { elizaLogger } from "@elizaos/core";
-import path from "path";
-function initializeDatabase(dataDir, modelHash) {
-  const filePath = process.env.SQLITE_FILE ?? path.resolve(dataDir, `db-${modelHash}.sqlite`);
+function initializeDatabase(modelHash) {
+  const filePath = process.env.SQLITE_FILE ?? `db-${modelHash}.sqlite`;
   elizaLogger.info("initializeDatabase filePath", filePath);
   const db = new SqliteDatabaseAdapter(filePath);
   return db;
 }
 
 // src/index.ts
-import path2 from "path";
-import { existsSync, mkdirSync } from "fs";
 import rn_bridge from "rn-bridge";
 import { verifiableTwitterPlugin } from "@elizaos/plugin-verifiable-twitter";
 var agent;
@@ -884,11 +881,7 @@ async function startAgent(character, client2, modelHash) {
       TWITTER_ACCESS_TOKEN_SECRET: twitterPluginConfigs.twitterAccessTokenSecret
     };
     const token = getTokenForProvider(character.modelProvider, character);
-    const dataDir = path2.resolve(process.env.cwd, "data");
-    if (!existsSync(dataDir)) {
-      mkdirSync(dataDir, { recursive: true });
-    }
-    const db = initializeDatabase(dataDir, modelHash);
+    const db = initializeDatabase(modelHash);
     await db.init();
     const cache = initializeDbCache(character, db);
     const runtime = createAgent(character, db, cache, token);

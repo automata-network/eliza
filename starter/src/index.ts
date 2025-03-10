@@ -145,11 +145,7 @@ async function startAgent(
                 twitterPluginConfigs.twitterAccessTokenSecret,
         };
         const token = getTokenForProvider(character.modelProvider, character);
-        const dataDir = path.resolve(process.env.cwd, "data");
-        if (!existsSync(dataDir)) {
-            mkdirSync(dataDir, { recursive: true });
-        }
-        const db = initializeDatabase(dataDir, modelHash);
+        const db = initializeDatabase(modelHash);
         await db.init();
         const cache = initializeDbCache(character, db);
         const runtime = createAgent(character, db, cache, token);
